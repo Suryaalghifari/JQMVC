@@ -489,7 +489,7 @@
 .container-grid {
 	max-width: 1200px;
 	margin: 40px auto;
-	background: black;
+	background: #fff;
 	border-radius: 14px;
 	box-shadow: 0 1px 14px rgba(0, 0, 0, 0.08);
 	padding: 36px 28px 34px 28px;
@@ -541,6 +541,12 @@
 	font-size: 1rem;
 	color: #5d4d1f;
 }
+
+.overflow-x-scroll {
+	width: 100%;
+	overflow-x: auto;
+}
+
 .form-control:focus {
 	outline: 1.5px solid #e7d59f;
 }
@@ -570,4 +576,55 @@
 .swal2-actions button.swal2-cancel {
 	font-size: 0.97em !important;
 	padding: 0.5em 1.3em !important;
+}
+
+.grid-toolbar-modern {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background: #fff;
+	padding: 10px 14px;
+	border-radius: 8px 8px 0 0;
+	box-shadow: 0 2px 7px rgba(0, 0, 0, 0.02);
+	border-bottom: 1px solid #eee;
+}
+.grid-toolbar-modern input[type="text"] {
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	padding: 6px 12px;
+	font-size: 14px;
+	outline: none;
+	margin-right: 6px;
+	width: 190px;
+	background: #fcfcfc;
+	transition: border 0.2s;
+}
+.grid-toolbar-modern input[type="text"]:focus {
+	border: 1.5px solid #93e1d8;
+}
+.toolbar-btn {
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	color: #7dd6c6;
+	border-radius: 6px;
+	padding: 5px 10px;
+	cursor: pointer;
+	font-size: 16px;
+	display: flex;
+	align-items: center;
+	transition: border 0.18s, color 0.18s;
+}
+.toolbar-btn:hover {
+	border-color: #93e1d8;
+	color: #36b37e;
+}
+.toolbar-add {
+	color: #36b37e;
+	border: 1.5px solid #36b37e;
+	font-weight: 500;
+	margin-left: 8px;
+}
+.toolbar-add:hover {
+	background: #f3fef6;
+	color: #16824d;
 }

@@ -29,7 +29,6 @@ $(function () {
 		pagesize: 20,
 		sortable: true,
 		filterable: true,
-
 		editable: true,
 		columnsresize: true,
 		selectionmode: "checkbox",
@@ -55,6 +54,7 @@ $(function () {
 				editable: false,
 				align: "center",
 				textalign: "center",
+				filtertype: "checkedlist",
 				cellsrenderer: function (row) {
 					return `<div style="text-align:center; width:100%;">${row + 1}</div>`;
 				},
@@ -66,6 +66,7 @@ $(function () {
 				width: 200,
 				align: "center",
 				cellsalign: "center",
+				filtertype: "checkedlist",
 			},
 			{
 				text: "Location",
@@ -73,6 +74,7 @@ $(function () {
 				width: 180,
 				align: "center",
 				cellsalign: "center",
+				filtertype: "checkedlist",
 			},
 			{
 				text: "Interface",
@@ -80,6 +82,7 @@ $(function () {
 				width: 800,
 				align: "center",
 				cellsalign: "center",
+				filtertype: "checkedlist",
 			},
 			{
 				text: "POP",
@@ -87,6 +90,7 @@ $(function () {
 				width: 150,
 				align: "center",
 				cellsalign: "center",
+				filtertype: "checkedlist",
 			},
 			{
 				text: "RRD Path",
@@ -94,6 +98,7 @@ $(function () {
 				width: 400,
 				align: "center",
 				cellsalign: "center",
+				filtertype: "checkedlist",
 			},
 			{
 				text: "RRD Alias",
@@ -101,6 +106,7 @@ $(function () {
 				width: 350,
 				align: "center",
 				cellsalign: "center",
+				filtertype: "checkedlist",
 			},
 			{
 				text: "RRD Status",
@@ -108,6 +114,7 @@ $(function () {
 				width: 125,
 				align: "center",
 				cellsalign: "center",
+				filtertype: "checkedlist",
 			},
 			{
 				text: "Capacity",
@@ -115,6 +122,7 @@ $(function () {
 				width: 150,
 				align: "center",
 				cellsalign: "center",
+				filtertype: "checkedlist",
 			},
 			{
 				text: "Service",
@@ -122,6 +130,7 @@ $(function () {
 				width: 80,
 				align: "center",
 				cellsalign: "center",
+				filtertype: "checkedlist",
 			},
 			{
 				text: "Directory",
@@ -203,7 +212,19 @@ $(function () {
 		}).then((result) => {
 			if (result.isConfirmed) {
 				let successCount = 0,
-					failCount = 0;
+					failCount = 0,
+					doneCount = 0;
+
+				Swal.fire({
+					title: "Menghapus...",
+					text: "Sedang menghapus data, mohon tunggu.",
+					allowOutsideClick: false,
+					allowEscapeKey: false,
+					didOpen: () => {
+						Swal.showLoading();
+					},
+				});
+
 				idsToDelete.forEach((id, idx) => {
 					$.ajax({
 						url: base_url + "index.php/api/services_delete/" + id,
@@ -212,7 +233,9 @@ $(function () {
 						success: (response) => {
 							if (response.success) successCount++;
 							else failCount++;
-							if (idx === idsToDelete.length - 1) {
+							doneCount++;
+							if (doneCount === idsToDelete.length) {
+								Swal.close(); // Tutup loading!
 								$("#jqxgrid").jqxGrid("updatebounddata");
 								showNotif({
 									icon: "success",
@@ -226,7 +249,9 @@ $(function () {
 						},
 						error: () => {
 							failCount++;
-							if (idx === idsToDelete.length - 1) {
+							doneCount++;
+							if (doneCount === idsToDelete.length) {
+								Swal.close(); // Tutup loading!
 								$("#jqxgrid").jqxGrid("updatebounddata");
 								showNotif({
 									icon: "error",
