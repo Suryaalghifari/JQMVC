@@ -11,13 +11,31 @@ $(function () {
 			{ name: "rrd_path", type: "string" },
 			{ name: "rrd_alias", type: "string" },
 			{ name: "rrd_status", type: "string" },
-			{ name: "Capacity", type: "string" },
+			{ name: "Capacity", type: "number" },
 			{ name: "service", type: "string" },
+			{ name: "zero_traffic", type: "string" },
 		],
 
 		url: base_url + "api/services_get", // API endpoint ambil data services
 	};
-	const dataAdapter = new $.jqx.dataAdapter(source);
+	const dataAdapter = new $.jqx.dataAdapter(source, {
+		// DI SINI!
+		beforeLoadComplete: function (records) {
+			records.forEach(function (row) {
+				const isAvail = row.rrd_status === "avail";
+				const hasPath =
+					row.rrd_path && row.rrd_path !== "null" && row.rrd_path.trim() !== "";
+				// Hasilkan string "true"/"false"
+				row.zero_traffic = isAvail && hasPath ? "true" : "false";
+			});
+			// Debug, cek hasil:
+			console.log(
+				"Isi zero_traffic sebelum grid:",
+				records.map((r) => r.zero_traffic)
+			);
+			return records;
+		},
+	});
 
 	$("#jqxgrid").jqxGrid({
 		width: "100%",
@@ -47,6 +65,7 @@ $(function () {
 			addButton.on("click", handleAddRow);
 			deleteButton.on("click", handleDeleteRows);
 		},
+
 		columns: [
 			{
 				text: "No",
@@ -142,6 +161,15 @@ $(function () {
 					return `<button class="btn-directory" data-id="${rowData.id}" style="display:block; margin:0 auto;">📂</button>`;
 				},
 			},
+			{
+				text: "Zero Traffic",
+				datafield: "zero_traffic",
+				width: 120,
+				align: "center",
+				cellsalign: "center",
+				filtertype: "checkedlist",
+				editable: false,
+			},
 		],
 	});
 
@@ -227,7 +255,7 @@ $(function () {
 
 				idsToDelete.forEach((id, idx) => {
 					$.ajax({
-						url: base_url + "index.php/api/services_delete/" + id,
+						url: base_url + "api/services_delete/" + id,
 						type: "DELETE",
 						dataType: "json",
 						success: (response) => {
@@ -366,7 +394,7 @@ $(function () {
 		//  update data
 		if (rowdata.id) {
 			$.ajax({
-				url: base_url + "index.php/api/services_update/" + rowdata.id,
+				url: base_url + "api/services_update/" + rowdata.id,
 				type: "PUT",
 				data: JSON.stringify(rowdata),
 				dataType: "json",
@@ -404,7 +432,7 @@ $(function () {
 	});
 	window.showDirectoryPopup = function (id) {
 		$.ajax({
-			url: base_url + "index.php/api/services_directory/" + id,
+			url: base_url + "api/services_directory/" + id,
 			type: "GET",
 			dataType: "json",
 			success: function (response) {
