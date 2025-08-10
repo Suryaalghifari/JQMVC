@@ -28,7 +28,7 @@ $(function () {
 				// Hasilkan string "true"/"false"
 				row.zero_traffic = isAvail && hasPath ? "true" : "false";
 			});
-			// Debug, cek hasil:
+
 			console.log(
 				"Isi zero_traffic sebelum grid:",
 				records.map((r) => r.zero_traffic)
@@ -40,6 +40,7 @@ $(function () {
 	$("#jqxgrid").jqxGrid({
 		width: "100%",
 		height: "100%",
+
 		theme: "office",
 		source: dataAdapter,
 		pageable: true,
@@ -47,25 +48,11 @@ $(function () {
 		pagesize: 20,
 		sortable: true,
 		filterable: true,
+		showfiltermenuitems: true,
 		editable: true,
 		columnsresize: true,
 		selectionmode: "checkbox",
-		showtoolbar: true,
-		rendertoolbar: function (toolbar) {
-			const container = $("<div style='margin: 5px;'></div>");
-			const addButton = $(
-				"<button class='btn-action'><i class='bi bi-plus-circle'></i> Tambah Data</button>"
-			);
-			const deleteButton = $(
-				"<button class='btn-action'><i class='bi bi-trash'></i> Hapus Data</button>"
-			);
-			container.append(addButton, deleteButton);
-			toolbar.append(container);
-
-			addButton.on("click", handleAddRow);
-			deleteButton.on("click", handleDeleteRows);
-		},
-
+		showtoolbar: false,
 		columns: [
 			{
 				text: "No",
@@ -73,19 +60,19 @@ $(function () {
 				editable: false,
 				align: "center",
 				textalign: "center",
-				filtertype: "checkedlist",
+				filterable: false, // jangan tampilkan menu filter di kolom No
 				cellsrenderer: function (row) {
 					return `<div style="text-align:center; width:100%;">${row + 1}</div>`;
 				},
 			},
 
+			// ====== kolom dengan menu operator lengkap (contains/starts with/equal + AND/OR)
 			{
 				text: "Peering",
 				datafield: "peering",
 				width: 200,
 				align: "center",
 				cellsalign: "center",
-				filtertype: "checkedlist",
 			},
 			{
 				text: "Location",
@@ -93,7 +80,6 @@ $(function () {
 				width: 180,
 				align: "center",
 				cellsalign: "center",
-				filtertype: "checkedlist",
 			},
 			{
 				text: "Interface",
@@ -101,15 +87,13 @@ $(function () {
 				width: 800,
 				align: "center",
 				cellsalign: "center",
-				filtertype: "checkedlist",
 			},
 			{
 				text: "POP",
-				datafield: "pop_site", // pengganti "pop"
+				datafield: "pop_site",
 				width: 150,
 				align: "center",
 				cellsalign: "center",
-				filtertype: "checkedlist",
 			},
 			{
 				text: "RRD Path",
@@ -117,7 +101,6 @@ $(function () {
 				width: 400,
 				align: "center",
 				cellsalign: "center",
-				filtertype: "checkedlist",
 			},
 			{
 				text: "RRD Alias",
@@ -125,8 +108,9 @@ $(function () {
 				width: 350,
 				align: "center",
 				cellsalign: "center",
-				filtertype: "checkedlist",
 			},
+
+			// ====== kolom yang memang enak pakai multi-select (checkedlist)
 			{
 				text: "RRD Status",
 				datafield: "rrd_status",
@@ -141,7 +125,7 @@ $(function () {
 				width: 150,
 				align: "center",
 				cellsalign: "center",
-				filtertype: "checkedlist",
+				filtertype: "number",
 			},
 			{
 				text: "Service",
@@ -151,6 +135,7 @@ $(function () {
 				cellsalign: "center",
 				filtertype: "checkedlist",
 			},
+
 			{
 				text: "Directory",
 				editable: false,
@@ -160,7 +145,9 @@ $(function () {
 					const rowData = $("#jqxgrid").jqxGrid("getrowdata", row);
 					return `<button class="btn-directory" data-id="${rowData.id}" style="display:block; margin:0 auto;">📂</button>`;
 				},
+				filterable: false,
 			},
+
 			{
 				text: "Zero Traffic",
 				datafield: "zero_traffic",
@@ -172,6 +159,57 @@ $(function () {
 			},
 		],
 	});
+
+	// ===== KPI dari TOTAL data (tidak terpengaruh filter) =====
+	let allRecords = [];
+
+	function isAktif(v) {
+		const s = String(v || "").toLowerCase();
+		return s === "avail" || (s.includes("avail") && !s.includes("unavail"));
+	}
+	function isNonAktif(v) {
+		return String(v || "")
+			.toLowerCase()
+			.includes("unavail");
+	}
+
+	function updateRRDKPITotals() {
+		const aktif = allRecords.filter((r) => isAktif(r.rrd_status)).length;
+		const nonAktif = allRecords.filter((r) => isNonAktif(r.rrd_status)).length;
+		$("#kpi-rrd-aktif").text(aktif);
+		$("#kpi-rrd-nonaktif").text(nonAktif);
+	}
+
+	dataAdapter._options.loadComplete = function (records) {
+		allRecords = Array.isArray(records) ? records : [];
+		updateRRDKPITotals(); // angka di kartu = total
+	};
+	let rrdFilterState = null; // null | 'aktif' | 'nonaktif'
+
+	function applyRRDFilter(mode) {
+		$("#jqxgrid").jqxGrid("removefilter", "rrd_status", false);
+
+		if (mode) {
+			const fg = new $.jqx.filter();
+			const v = mode === "aktif" ? "avail" : "unavail";
+			fg.addfilter(1, fg.createfilter("stringfilter", v, "equal")); // cocok untuk checkedlist
+			$("#jqxgrid").jqxGrid("addfilter", "rrd_status", fg, false);
+		}
+		$("#jqxgrid").jqxGrid("applyfilters");
+
+		$("#card-rrd-aktif, #card-rrd-nonaktif").removeClass("active");
+		if (mode === "aktif") $("#card-rrd-aktif").addClass("active");
+		if (mode === "nonaktif") $("#card-rrd-nonaktif").addClass("active");
+		rrdFilterState = mode;
+	}
+
+	// binding klik (toggle)
+	$("#card-rrd-aktif").on("click", () =>
+		applyRRDFilter(rrdFilterState === "aktif" ? null : "aktif")
+	);
+	$("#card-rrd-nonaktif").on("click", () =>
+		applyRRDFilter(rrdFilterState === "nonaktif" ? null : "nonaktif")
+	);
 
 	// Handler Tambah Row
 	function handleAddRow() {
@@ -199,6 +237,35 @@ $(function () {
 		$("#jqxgrid").jqxGrid("addrow", null, newrow, "first");
 		$("#jqxgrid").jqxGrid("begincelledit", 0, "peering");
 	}
+	// helper: refresh data grid (tanpa reload halaman)
+	function refreshGrid(keepFilters = true) {
+		if (!keepFilters) {
+			$("#globalSearch").val("");
+			$("#jqxgrid").jqxGrid("clearfilters");
+			$("#card-rrd-aktif, #card-rrd-nonaktif").removeClass("active");
+			rrdFilterState = null;
+		}
+
+		const $btn = $("#btnRefresh");
+		const prevHTML = $btn.html();
+		$btn
+			.prop("disabled", true)
+			.html('<i class="bi bi-arrow-repeat"></i> Refreshing…');
+
+		$("#jqxgrid").one("bindingcomplete", function () {
+			$btn.prop("disabled", false).html(prevHTML);
+		});
+
+		$("#jqxgrid").jqxGrid("updatebounddata");
+	}
+
+	$("#btnRefresh").on("click", function () {
+		refreshGrid(true);
+	});
+
+	$("#btnRefresh").on("click", function (e) {
+		if (e.altKey) refreshGrid(false);
+	});
 
 	function handleDeleteRows() {
 		const selectedIndexes = $("#jqxgrid").jqxGrid("getselectedrowindexes");
@@ -303,6 +370,13 @@ $(function () {
 		e.stopPropagation();
 		const id = $(this).data("id");
 		showDirectoryPopup(id);
+	});
+	$("#btnAdd").on("click", function () {
+		handleAddRow();
+	});
+
+	$("#btnDelete").on("click", function () {
+		handleDeleteRows();
 	});
 
 	$("#jqxgrid").on("pagesizechanged", function (event) {

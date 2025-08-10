@@ -4,9 +4,8 @@
     <title>JQtabels - CRUD</title>
     <link rel="icon" type="image/png" href="<?= base_url('assets/grid/images/logo.png') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/grid/css/jqx.base.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/grid/css/jqx.light.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/grid/css/jqx.office.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/grid/css/jqx.ui-redmond.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/grid-custom.css') ?>"> 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
@@ -40,7 +39,57 @@
     <script src="<?= base_url('assets/grid/js/grid.js') ?>"></script>
     
 </head>
-<body>
-    <div id="jqxgrid"</div>
+
+<body style="background:#f6f8fb">
+  <div class="page-wrap">
+
+    <div class="cards">
+      <div class="card kpi" id="card-rrd-aktif">
+        <div class="kpi-title">RRD Aktif</div>
+        <div class="kpi-value text-green" id="kpi-rrd-aktif">0</div>
+        <div class="kpi-sub">Status = Available</div>
+      </div>
+      <div class="card kpi" id="card-rrd-nonaktif">
+        <div class="kpi-title">RRD Non Aktif</div>
+        <div class="kpi-value text-orange" id="kpi-rrd-nonaktif">0</div>
+        <div class="kpi-sub">Status = Non Available</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-title">MRTG On Air</div>
+        <div class="kpi-value" id="kpi-mrtg-on">0</div>
+        <div class="kpi-sub">Sedang menyala</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-title">MRTG Off Air</div>
+        <div class="kpi-value text-orange" id="kpi-mrtg-off">0</div>
+        <div class="kpi-sub">Sedang mati</div>
+      </div>
+    </div>
+
+    <div class="grid-card">
+      <div class="grid-header">
+        <div>
+          <h3>Data</h3>
+          <span class="muted">Kelola informasi</span>
+        </div>
+        <div class="grid-tools">
+          <div class="search">
+            <i class="bi bi-search"></i>
+            <input id="globalSearch" type="text" placeholder="Cari data..." />
+          </div>
+          <button id="btnAdd" class="btn-primary"><i class="bi bi-plus-lg"></i> Tambah Data</button>
+          <button id="btnDelete" class="btn-danger"><i class="bi bi-trash"></i> Hapus Data</button>
+          <button id="btnRefresh" class="btn-secondary"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+
+        </div>
+      </div>
+      
+        <div id="jqxgrid"></div>
+      
+    </div>
+
+  </div>
 </body>
+
+
 </html>

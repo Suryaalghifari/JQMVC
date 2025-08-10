@@ -1,0 +1,221 @@
+/* ===========================
+   GRID CUSTOM STYLE OVERRIDE
+   =========================== */
+
+/* Grid wrapper supaya override hanya berlaku di area ini */
+#gridWrap .jqx-grid-office {
+	border: none;
+	border-radius: 0;
+}
+
+#gridWrap .jqx-grid-header-office {
+	background: #ffffff !important;
+	border-bottom: 1px solid #eef1f5 !important;
+}
+
+#gridWrap .jqx-widget-office .jqx-grid-column-header-office {
+	font-weight: 600;
+	color: #111827;
+	border-color: #eef1f5 !important;
+	background: #ffffff !important;
+	padding: 12px 14px;
+}
+
+/* Sel & zebra */
+#gridWrap .jqx-widget-office .jqx-grid-cell-office {
+	border-color: #f3f4f6 !important;
+	padding: 12px 14px;
+}
+#gridWrap .jqx-grid-cell-alt-office {
+	background: #fcfdff !important;
+}
+#gridWrap .jqx-grid-cell-hover-office {
+	background: #f5faff !important;
+}
+
+/* Hilangkan warna hijau bawaan theme Office */
+#gridWrap .jqx-fill-state-hover-office {
+	border-color: #e5e7eb !important;
+	background: #f7f8fb !important;
+	color: #111827 !important;
+}
+#gridWrap .jqx-fill-state-pressed-office {
+	border-color: #d1d5db !important;
+	background: #e5e7eb !important;
+	color: #111827 !important;
+}
+
+/* Pager & statusbar */
+#gridWrap .jqx-grid-statusbar,
+#gridWrap .jqx-grid-pager {
+	border-top: 1px solid #eef1f5 !important;
+}
+
+/* Checkbox lebih rapat */
+#gridWrap .jqx-grid-column-header-office .jqx-checkbox-default,
+#gridWrap .jqx-grid-cell-office .jqx-checkbox-default {
+	margin-left: 8px;
+}
+
+/* Badge status */
+.badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+}
+.badge.green {
+	background: #e9f9ee;
+	color: #16a34a;
+}
+.badge.yellow {
+	background: #fff7e6;
+	color: #d97706;
+}
+.badge.red {
+	background: #fde8e8;
+	color: #dc2626;
+}
+
+/* Aksi icon */
+.action {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+.action .ico {
+	cursor: pointer;
+	opacity: 0.85;
+}
+.action .ico:hover {
+	opacity: 1;
+}
+
+/* Cards KPI */
+.cards {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 16px;
+	margin: 12px 0 22px;
+}
+.card {
+	background: #fff;
+	border: 1px solid #e7eaf1;
+	border-radius: 14px;
+	padding: 18px 20px;
+	box-shadow: 0 2px 8px rgba(16, 24, 40, 0.04);
+}
+.kpi-title {
+	font-size: 13px;
+	color: #6b7280;
+}
+.kpi-value {
+	font-size: 28px;
+	font-weight: 700;
+	margin: 8px 0;
+}
+.kpi-sub {
+	font-size: 12px;
+	color: #9aa2b1;
+}
+.card.kpi {
+	cursor: pointer;
+}
+.card.kpi.active {
+	outline: 2px solid #3b82f6;
+}
+
+.text-green {
+	color: #22c55e;
+}
+.text-orange {
+	color: #f59e0b;
+}
+
+/* Grid panel di dalam card */
+.grid-card {
+	background: #fff;
+	border: 1px solid #e7eaf1;
+	border-radius: 14px;
+	overflow: hidden;
+	box-shadow: 0 2px 10px rgba(16, 24, 40, 0.04);
+}
+.grid-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 18px;
+	border-bottom: 1px solid #eef1f5;
+}
+.grid-header h3 {
+	margin: 0;
+}
+.grid-header .muted {
+	font-size: 12px;
+	color: #9aa2b1;
+}
+.grid-tools {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+.search {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: #f7f8fb;
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	padding: 8px 10px;
+}
+.search input {
+	border: none;
+	outline: none;
+	background: transparent;
+	min-width: 220px;
+}
+.btn-primary {
+	background: #3b82f6;
+	border: 0;
+	color: #fff;
+	border-radius: 10px;
+	padding: 9px 14px;
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	cursor: pointer;
+}
+.btn-primary:hover {
+	filter: brightness(0.96);
+}
+.btn-danger {
+	background: #ef4444;
+	border: 0;
+	color: #fff;
+	border-radius: 10px;
+	padding: 9px 14px;
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	cursor: pointer;
+}
+.btn-danger:hover {
+	filter: brightness(0.96);
+}
+.btn-secondary {
+	background: #6b7280;
+	color: #fff;
+	border: 0;
+	border-radius: 10px;
+	padding: 9px 14px;
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	cursor: pointer;
+}
+.btn-secondary:hover {
+	filter: brightness(0.96);
+}
