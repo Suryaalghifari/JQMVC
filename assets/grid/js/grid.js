@@ -14,26 +14,56 @@ $(function () {
 			{ name: "Capacity", type: "number" },
 			{ name: "service", type: "string" },
 			{ name: "zero_traffic", type: "string" },
+			{ name: "_search", type: "string" },
+			{ name: "mrtg_status", type: "string" },
 		],
 
 		url: base_url + "api/services_get", // API endpoint ambil data services
 	};
 	const dataAdapter = new $.jqx.dataAdapter(source, {
-		// DI SINI!
 		beforeLoadComplete: function (records) {
 			records.forEach(function (row) {
-				const isAvail = row.rrd_status === "avail";
+				const status = String(row.rrd_status || "")
+					.toLowerCase()
+					.trim();
+				const pathStr =
+					row.rrd_path == null ? "" : String(row.rrd_path).trim().toLowerCase();
 				const hasPath =
-					row.rrd_path && row.rrd_path !== "null" && row.rrd_path.trim() !== "";
-				// Hasilkan string "true"/"false"
-				row.zero_traffic = isAvail && hasPath ? "true" : "false";
-			});
+					pathStr !== "" &&
+					pathStr !== "null" &&
+					pathStr !== "undefined" &&
+					pathStr !== "-";
 
-			console.log(
-				"Isi zero_traffic sebelum grid:",
-				records.map((r) => r.zero_traffic)
-			);
+				row.zero_traffic = status === "avail" && hasPath ? "true" : "false";
+				row.mrtg_status = status === "avail" && hasPath ? "on" : "off";
+
+				const parts = [
+					row.id,
+					row.peering,
+					row.location,
+					row.interface,
+					row.pop_site,
+					row.rrd_path,
+					row.rrd_alias,
+					row.rrd_status,
+					row.Capacity,
+					row.service,
+				];
+				row._search = parts
+					.map((v) => (v == null ? "" : String(v)))
+					.join(" ")
+					.toLowerCase();
+			});
 			return records;
+		},
+
+		// <- PENTING: ini dipanggil setelah data siap dipakai (records sudah diproses)
+		loadComplete: function (records) {
+			allRecords = Array.isArray(records) ? records : [];
+			updateKPITotals();
+			// debug cepat:
+			// console.log('mrtg_on', allRecords.filter(r=>r.mrtg_status==='on').length,
+			//             'mrtg_off', allRecords.filter(r=>r.mrtg_status==='off').length);
 		},
 	});
 
@@ -87,6 +117,7 @@ $(function () {
 				width: 800,
 				align: "center",
 				cellsalign: "center",
+				filtertype: "checkedlist",
 			},
 			{
 				text: "POP",
@@ -157,33 +188,102 @@ $(function () {
 				filtertype: "checkedlist",
 				editable: false,
 			},
+			{ datafield: "_search", hidden: true, filterable: true },
+			{ datafield: "mrtg_status", hidden: true, filterable: true },
 		],
 	});
+	// Global Search: filter
+	let globalSearchTimer;
+	$("#globalSearch").on("input", function () {
+		clearTimeout(globalSearchTimer);
+		const q = this.value.trim().toLowerCase();
 
-	// ===== KPI dari TOTAL data (tidak terpengaruh filter) =====
-	let allRecords = [];
+		globalSearchTimer = setTimeout(function () {
+			$("#jqxgrid").jqxGrid("removefilter", "_search", false);
 
-	function isAktif(v) {
-		const s = String(v || "").toLowerCase();
-		return s === "avail" || (s.includes("avail") && !s.includes("unavail"));
+			if (q) {
+				const fg = new $.jqx.filter();
+				const f = fg.createfilter("stringfilter", q, "contains");
+				fg.addfilter(1, f);
+				$("#jqxgrid").jqxGrid("addfilter", "_search", fg, false);
+			}
+
+			$("#jqxgrid").jqxGrid("applyfilters");
+
+			setTimeout(function () {
+				const rows = $("#jqxgrid").jqxGrid("getdisplayrows");
+				if (rows && rows.length) {
+					const idx = $("#jqxgrid").jqxGrid(
+						"getrowboundindexbyid",
+						rows[0].uid
+					);
+					$("#jqxgrid").jqxGrid("ensurerowvisible", idx);
+				}
+			}, 50);
+		}, 250);
+	});
+
+	function hasPath(v) {
+		const p = (v == null ? "" : String(v)).trim().toLowerCase();
+		return p && p !== "null" && p !== "undefined" && p !== "-";
 	}
-	function isNonAktif(v) {
+	function isRRDAktif(v) {
+		const s = String(v || "").toLowerCase();
+		return s.includes("avail") && !s.includes("unavail");
+	}
+	function isRRDNonAktif(v) {
 		return String(v || "")
 			.toLowerCase()
 			.includes("unavail");
 	}
-
-	function updateRRDKPITotals() {
-		const aktif = allRecords.filter((r) => isAktif(r.rrd_status)).length;
-		const nonAktif = allRecords.filter((r) => isNonAktif(r.rrd_status)).length;
-		$("#kpi-rrd-aktif").text(aktif);
-		$("#kpi-rrd-nonaktif").text(nonAktif);
+	function isMRTGOn(row) {
+		return (
+			String(row.rrd_status || "").toLowerCase() === "avail" &&
+			hasPath(row.rrd_path)
+		);
 	}
 
-	dataAdapter._options.loadComplete = function (records) {
-		allRecords = Array.isArray(records) ? records : [];
-		updateRRDKPITotals(); // angka di kartu = total
-	};
+	function updateKPI() {
+		const rows = $("#jqxgrid").jqxGrid("getboundrows") || [];
+
+		const rrdAktif = rows.filter((r) => isRRDAktif(r.rrd_status)).length;
+		const rrdNon = rows.filter((r) => isRRDNonAktif(r.rrd_status)).length;
+		const mrtgOn = rows.filter(isMRTGOn).length;
+		const mrtgOff = rows.length - mrtgOn;
+
+		$("#kpi-rrd-aktif").text(rrdAktif);
+		$("#kpi-rrd-nonaktif").text(rrdNon);
+		$("#kpi-mrtg-on").text(mrtgOn);
+		$("#kpi-mrtg-off").text(mrtgOff);
+	}
+
+	$("#jqxgrid").on("bindingcomplete", updateKPI);
+	$("#jqxgrid").on("filter sort pagechanged pagesizechanged", updateKPI);
+
+	let mrtgFilterState = null; // null | 'on' | 'off'
+
+	function applyMRTGFilter(mode) {
+		$("#jqxgrid").jqxGrid("removefilter", "mrtg_status", false);
+
+		if (mode) {
+			const fg = new $.jqx.filter();
+			fg.addfilter(1, fg.createfilter("stringfilter", mode, "equal"));
+			$("#jqxgrid").jqxGrid("addfilter", "mrtg_status", fg, false);
+		}
+		$("#jqxgrid").jqxGrid("applyfilters");
+
+		$("#card-mrtg-on, #card-mrtg-off").removeClass("active");
+		if (mode === "on") $("#card-mrtg-on").addClass("active");
+		if (mode === "off") $("#card-mrtg-off").addClass("active");
+		mrtgFilterState = mode;
+	}
+
+	$("#card-mrtg-on").on("click", () =>
+		applyMRTGFilter(mrtgFilterState === "on" ? null : "on")
+	);
+	$("#card-mrtg-off").on("click", () =>
+		applyMRTGFilter(mrtgFilterState === "off" ? null : "off")
+	);
 	let rrdFilterState = null; // null | 'aktif' | 'nonaktif'
 
 	function applyRRDFilter(mode) {
@@ -237,7 +337,6 @@ $(function () {
 		$("#jqxgrid").jqxGrid("addrow", null, newrow, "first");
 		$("#jqxgrid").jqxGrid("begincelledit", 0, "peering");
 	}
-	// helper: refresh data grid (tanpa reload halaman)
 	function refreshGrid(keepFilters = true) {
 		if (!keepFilters) {
 			$("#globalSearch").val("");

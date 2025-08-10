@@ -54,16 +54,16 @@
         <div class="kpi-value text-orange" id="kpi-rrd-nonaktif">0</div>
         <div class="kpi-sub">Status = Non Available</div>
       </div>
-      <div class="card kpi">
-        <div class="kpi-title">MRTG On Air</div>
-        <div class="kpi-value" id="kpi-mrtg-on">0</div>
-        <div class="kpi-sub">Sedang menyala</div>
-      </div>
-      <div class="card kpi">
-        <div class="kpi-title">MRTG Off Air</div>
-        <div class="kpi-value text-orange" id="kpi-mrtg-off">0</div>
-        <div class="kpi-sub">Sedang mati</div>
-      </div>
+      <div class="card kpi" id="card-mrtg-on">
+          <div class="kpi-title">MRTG On Air</div>
+          <div class="kpi-value text-green" id="kpi-mrtg-on">0</div>
+          <div class="kpi-sub">Sedang menyala</div>
+        </div>
+        <div class="card kpi" id="card-mrtg-off">
+          <div class="kpi-title">MRTG Off Air</div>
+          <div class="kpi-value text-orange" id="kpi-mrtg-off">0</div>
+          <div class="kpi-sub">Sedang mati</div>
+        </div>
     </div>
 
     <div class="grid-card">
