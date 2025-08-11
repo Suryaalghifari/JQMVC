@@ -1,32 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Interface Management</title>
-    <link rel="icon" type="image/png" href="<?= base_url('assets/interface_management/images/logo.png') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/interface_management/css/jqx.base.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/interface_management/css/jqx.office.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/css/interface_management_custom.css') ?>"> 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <meta charset="utf-8">
+  <title>Interface Management</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <!-- Favicon (biarin sesuai punyamu) -->
+  <link rel="icon" type="image/png" href="<?= base_url('assets/vendor/css/images/logo.png') ?>">
 
-    <!-- jqWidgets scripts -->
-    <script src="<?= base_url('assets/interface_management/js/jqwidgets/jqx-all.js') ?>"></script>
-    
+  <!-- CSS jqx wajib -->
+<link rel="stylesheet" href="<?= base_url('assets/vendor/css/jqx.base.css') ?>">
+<link rel="stylesheet" href="<?= base_url('assets/vendor/css/jqx.office.css') ?>">
+<link rel="stylesheet" href="<?= base_url('assets/interface_management/css/interface_management_custom.css') ?>">
 
-    <!-- Define base_url for JS -->
-    <script>
-      var base_url = "<?= base_url() ?>";
-    </script>
+<!-- base_url dari PHP -->
+<script>var base_url = "<?= base_url() ?>";</script>
 
-    <!-- Custom JS -->
-    <script src="<?= base_url('assets/interface_management/js/notif/swalNotif.js') ?>"></script>
-    <script src="<?= base_url('assets/interface_management/js/interface_management.js') ?>"></script>
-    
+<!-- VENDOR JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="<?= base_url('assets/vendor/jqwidgets/jqx-all.js') ?>"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- APP JS (modular) -->
+<script src="<?= base_url('assets/interface_management/js/core/namespace.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/core/config.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/core/utils.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/core/api.js') ?>"></script>
+
+<script src="<?= base_url('assets/interface_management/js/grid/datasource.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/grid/filters/locationPanel.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/grid/columns.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/grid/columnMenuGuards.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/grid/grid.js') ?>"></script>
+
+<script src="<?= base_url('assets/interface_management/js/features/kpi.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/features/actions.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/features/search.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/features/directory.js') ?>"></script>
+
+<script src="<?= base_url('assets/interface_management/js/notif/swalNotif.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/main.js') ?>"></script>
+
+
 </head>
-
 <body style="background:#f6f8fb">
   <div class="page-wrap">
 
@@ -42,15 +57,15 @@
         <div class="kpi-sub">Status = Non Available</div>
       </div>
       <div class="card kpi" id="card-mrtg-on">
-          <div class="kpi-title">MRTG On Air</div>
-          <div class="kpi-value text-green" id="kpi-mrtg-on">0</div>
-          <div class="kpi-sub">Sedang menyala</div>
-        </div>
-        <div class="card kpi" id="card-mrtg-off">
-          <div class="kpi-title">MRTG Off Air</div>
-          <div class="kpi-value text-red" id="kpi-mrtg-off">0</div>
-          <div class="kpi-sub">Sedang mati</div>
-        </div>
+        <div class="kpi-title">MRTG On Air</div>
+        <div class="kpi-value text-green" id="kpi-mrtg-on">0</div>
+        <div class="kpi-sub">Sedang menyala</div>
+      </div>
+      <div class="card kpi" id="card-mrtg-off">
+        <div class="kpi-title">MRTG Off Air</div>
+        <div class="kpi-value text-red" id="kpi-mrtg-off">0</div>
+        <div class="kpi-sub">Sedang mati</div>
+      </div>
     </div>
 
     <div class="grid-card">
@@ -67,16 +82,15 @@
           <button id="btnAdd" class="btn-primary"><i class="bi bi-plus-lg"></i> Tambah Data</button>
           <button id="btnDelete" class="btn-danger"><i class="bi bi-trash"></i> Hapus Data</button>
           <button id="btnRefresh" class="btn-secondary"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
-
         </div>
       </div>
-      
-        <div id="jqxgrid"></div>
-      
+
+      <div id="jqxgrid"></div>
     </div>
 
   </div>
+
+  <!-- ===== VENDOR JS (URUTAN WAJIB) ===== -->
+  
 </body>
-
-
 </html>

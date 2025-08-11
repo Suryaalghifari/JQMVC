@@ -1,0 +1,10 @@
+(function (IM, $) {
+	$(function () {
+		// JANGAN timpa IM.cfg.baseUrl lagi di sini
+		IM.Grid.init();
+		IM.KPI && IM.KPI.wireCards && IM.KPI.wireCards();
+		IM.Actions && IM.Actions.wireButtons && IM.Actions.wireButtons();
+		IM.Directory && IM.Directory.wire && IM.Directory.wire();
+		IM.Search && IM.Search.init && IM.Search.init();
+	});
+})(window.IM, jQuery);
