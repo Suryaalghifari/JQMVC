@@ -1,8 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-$route['default_controller'] = 'grid/grid';
-$route['grid'] = 'grid/grid/index';
+$route['default_controller'] = 'interface_management/interface_management';
+$route['interface_management'] = 'interface_management/interface_management/index';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE; 
 

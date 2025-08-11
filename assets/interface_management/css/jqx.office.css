@@ -501,3 +501,17 @@
 	font-size: 0.97em !important;
 	padding: 0.5em 1.3em !important;
 }
+/* Pastikan kontainer dropdown bisa scroll */
+#jqxgrid .jqx-menu-dropdown,
+#jqxgrid .jqx-menu-content {
+	max-height: 70vh !important;
+	overflow-y: auto !important;
+	overflow-x: hidden !important;
+}
+
+/* Biarkan item li mengikuti tinggi konten */
+#jqxgrid .jqx-menu-dropdown ul > li,
+#jqxgrid .jqx-menu-content ul > li {
+	height: auto !important;
+	overflow: visible !important;
+}

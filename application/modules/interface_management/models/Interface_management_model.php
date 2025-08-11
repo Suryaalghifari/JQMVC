@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Grid_model extends CI_Model
+class Interface_management_model extends CI_Model
 {
     // Ambil semua data
     public function get_all()

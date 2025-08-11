@@ -4,20 +4,20 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 /**
  * @property Output $output
  * @property CI_Input $input
- * @property Grid_model $Grid_model
+ * @property Interface_management_model $Interface_management_model
  */
-class Grid_api extends MX_Controller
+class Interface_management_api extends MX_Controller
 {
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('Grid_model');  // Model sesuai file di models/Grid_model.php
+        $this->load->model('Interface_management_model'); 
     }
 
     // GET: Ambil semua data
     public function services_get()
     {
-        $data = $this->Grid_model->get_all();
+        $data = $this->Interface_management_model->get_all();
 
         foreach ($data as &$row) {
             $row['pop_site'] = isset($row['pop']) ? $row['pop'] : null;
@@ -58,7 +58,7 @@ class Grid_api extends MX_Controller
             return;
         }
 
-        $id = $this->Grid_model->insert($data);
+        $id = $this->Interface_management_model->insert($data);
         if ($id) {
             echo json_encode(['success' => true, 'id' => $id]);
         } else {
@@ -87,7 +87,7 @@ class Grid_api extends MX_Controller
             unset($data['pop_site']);
         }
 
-        $updated = $this->Grid_model->update($id, $data);
+        $updated = $this->Interface_management_model->update($id, $data);
         if ($updated) {
             echo json_encode(['success' => true]);
         } else {
@@ -102,7 +102,7 @@ class Grid_api extends MX_Controller
             echo json_encode(['success' => false, 'message' => 'ID wajib ada']);
             return;
         }
-        $deleted = $this->Grid_model->delete($id);
+        $deleted = $this->Interface_management_model->delete($id);
         if ($deleted) {
             echo json_encode(['success' => true]);
         } else {
@@ -117,7 +117,7 @@ class Grid_api extends MX_Controller
             echo json_encode(['success' => false, 'message' => 'ID wajib ada']);
             return;
         }
-        $data = $this->Grid_model->get_by_id($id);
+        $data = $this->Interface_management_model->get_by_id($id);
         if ($data && !empty($data['rrd_path'])) {
             echo json_encode([
                 'success' => true,

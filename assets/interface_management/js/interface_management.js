@@ -57,20 +57,17 @@ $(function () {
 			return records;
 		},
 
-		// <- PENTING: ini dipanggil setelah data siap dipakai (records sudah diproses)
 		loadComplete: function (records) {
 			allRecords = Array.isArray(records) ? records : [];
 			updateKPITotals();
-			// debug cepat:
-			// console.log('mrtg_on', allRecords.filter(r=>r.mrtg_status==='on').length,
-			//             'mrtg_off', allRecords.filter(r=>r.mrtg_status==='off').length);
 		},
 	});
 
-	$("#jqxgrid").jqxGrid({
-		width: "100%",
-		height: "100%",
+	const GRID = "#jqxgrid";
 
+	$(GRID).jqxGrid({
+		width: "100%",
+		height: 600,
 		theme: "office",
 		source: dataAdapter,
 		pageable: true,
@@ -78,11 +75,17 @@ $(function () {
 		pagesize: 20,
 		sortable: true,
 		filterable: true,
+		columnsmenu: true,
+
+		//filtermode: "excel",
+		//showfilterrow: true,
 		showfiltermenuitems: true,
+		filtermode: "default",
 		editable: true,
 		columnsresize: true,
 		selectionmode: "checkbox",
 		showtoolbar: false,
+
 		columns: [
 			{
 				text: "No",
@@ -96,7 +99,6 @@ $(function () {
 				},
 			},
 
-			// ====== kolom dengan menu operator lengkap (contains/starts with/equal + AND/OR)
 			{
 				text: "Peering",
 				datafield: "peering",
@@ -104,13 +106,197 @@ $(function () {
 				align: "center",
 				cellsalign: "center",
 			},
+
 			{
 				text: "Location",
 				datafield: "location",
 				width: 180,
 				align: "center",
 				cellsalign: "center",
+				filtertype: "custom",
+				createfilterpanel: function (datafield, panel) {
+					// >>> biar item LI yang menampung panel nggak ngunci tinggi
+					$(panel).closest("li").css({ height: "auto", overflow: "visible" });
+
+					// >>> scroll TUNGGAL di area panel (di bawah "Remove Sort")
+					$(panel).css({
+						display: "block",
+						maxHeight: "none",
+						overflow: "visible",
+					});
+
+					// --- lanjut isi panel seperti biasa ---
+					const $wrap = $('<div class="cm-filter-wrap"></div>').appendTo(panel);
+
+					const rows = $("#jqxgrid").jqxGrid("getboundrows") || [];
+					const seen = {},
+						values = [];
+					for (let i = 0; i < rows.length; i++) {
+						const v = rows[i][datafield];
+						if (v != null && v !== "" && !seen[v]) {
+							seen[v] = true;
+							values.push(v);
+						}
+					}
+					values.sort();
+
+					// holder list (tinggi kecil saja; panel yg scroll)
+					const $lbHolder = $('<div class="lb-holder"></div>').appendTo($wrap);
+					const $list = $("<div/>").appendTo($lbHolder).jqxListBox({
+						source: values,
+						checkboxes: true,
+						filterable: true,
+						searchMode: "containsignorecase",
+						width: "100%",
+						height: 100,
+					});
+
+					$(
+						'<div style="margin:2px 0 2px;font-weight:600">Show rows where:</div>'
+					).appendTo($wrap);
+
+					// opsi operator
+					const OPS = [
+						{ label: "empty", value: "null" },
+						{ label: "not empty", value: "not_null" },
+						{ label: "contains", value: "contains" },
+						{
+							label: "contains (match case)",
+							value: "contains_case_sensitive",
+						},
+						{ label: "does not contain", value: "does_not_contain" },
+						{
+							label: "does not contain (match case)",
+							value: "does_not_contain_case_sensitive",
+						},
+						{ label: "equals", value: "equal" },
+						{ label: "not equal", value: "not_equal" },
+						{ label: "starts with", value: "starts_with" },
+						{
+							label: "starts with (match case)",
+							value: "starts_with_case_sensitive",
+						},
+						{ label: "ends with", value: "ends_with" },
+						{
+							label: "ends with (match case)",
+							value: "ends_with_case_sensitive",
+						},
+					];
+
+					function makeRow(parent) {
+						const $op = $("<div></div>").appendTo(parent).jqxDropDownList({
+							source: OPS,
+							displayMember: "label",
+							valueMember: "value",
+							selectedIndex: 2,
+							width: "100%",
+							height: 28,
+						});
+						const $inp = $('<input type="text">')
+							.appendTo(parent)
+							.jqxInput({ width: "100%", height: 28 });
+						const toggle = (v) =>
+							$inp
+								.closest(".jqx-input, input")
+								.toggle(!(v === "null" || v === "not_null"));
+						$op.on("change", (e) =>
+							toggle(e.args && e.args.item ? e.args.item.value : $op.val())
+						);
+						toggle($op.val());
+						return { op: $op, inp: $inp };
+					}
+
+					const row1 = makeRow($wrap);
+					const $join = $('<div style="margin:6px 0"></div>')
+						.appendTo($wrap)
+						.jqxDropDownList({
+							source: ["And", "Or"],
+							selectedIndex: 0,
+							width: "100%",
+							height: 26,
+						});
+					const row2 = makeRow($wrap);
+
+					const $bar = $('<div class="btnbar"></div>').appendTo($wrap);
+					const $btnFilter = $("<button>Filter</button>")
+						.appendTo($bar)
+						.jqxButton();
+					const $btnClear = $("<button>Clear</button>")
+						.appendTo($bar)
+						.jqxButton();
+
+					// >>>> UKUR ULANG TINGGI LIST SETELAH SEMUA ELEMEN TERBUAT
+					function resizeListArea() {
+						const $dropdown = $(panel).closest(
+							".jqx-menu-dropdown, .jqx-menu-content, .jqx-menu"
+						);
+						const wrapMax = $dropdown.innerHeight();
+
+						let othersH = 0;
+						$wrap.children().each(function () {
+							if (this !== $lbHolder[0]) othersH += $(this).outerHeight(true);
+						});
+
+						const h = Math.max(120, wrapMax - othersH - 6);
+						$lbHolder.height(h);
+						$list.jqxListBox({ height: h });
+					}
+
+					// apply filter
+					$btnFilter.on("click", function () {
+						const fg = new $.jqx.filter();
+						const OR = 1,
+							AND = 0;
+
+						const items = $list.jqxListBox("getCheckedItems") || [];
+						for (let i = 0; i < items.length; i++) {
+							fg.addfilter(
+								OR,
+								fg.createfilter("stringfilter", items[i].label, "equal")
+							);
+						}
+
+						const op1 = row1.op.val();
+						if (op1 === "null" || op1 === "not_null") {
+							fg.addfilter(AND, fg.createfilter("stringfilter", "", op1));
+						} else {
+							const v1 = row1.inp.val().trim();
+							if (v1)
+								fg.addfilter(AND, fg.createfilter("stringfilter", v1, op1));
+						}
+
+						const join = $join.val() === "And" ? AND : OR;
+						const op2 = row2.op.val();
+						if (op2 === "null" || op2 === "not_null") {
+							fg.addfilter(join, fg.createfilter("stringfilter", "", op2));
+						} else {
+							const v2 = row2.inp.val().trim();
+							if (v2)
+								fg.addfilter(join, fg.createfilter("stringfilter", v2, op2));
+						}
+
+						if (fg.getfilterscount() === 0) {
+							$(GRID).jqxGrid("removefilter", datafield, true);
+							return;
+						}
+						$(GRID).jqxGrid("addfilter", datafield, fg);
+						$(GRID).jqxGrid("applyfilters");
+					});
+
+					// clear filter
+					$btnClear.on("click", function () {
+						$(GRID).jqxGrid("removefilter", datafield, true);
+					});
+					const $li = $(panel).closest("li");
+					if ($li.length) {
+						// hapus style height bawaan, lalu paksa auto pakai !important
+						$li[0].style.removeProperty("height");
+						$li[0].style.setProperty("height", "auto", "important");
+						$li.css({ overflow: "visible" });
+					}
+				},
 			},
+
 			{
 				text: "Interface",
 				datafield: "interface",
@@ -191,7 +377,72 @@ $(function () {
 			{ datafield: "_search", hidden: true, filterable: true },
 			{ datafield: "mrtg_status", hidden: true, filterable: true },
 		],
+		columnmenuopening: function (menu /* <ul> */) {
+			const $ul = $(menu); // <-- ini UL yang benar
+			const $menuBox = $ul.closest(".jqx-menu"); // kotak menu jqx
+
+			// biarkan jqx hitung layout dulu, baru kita set scroll
+			requestAnimationFrame(() => {
+				const top = $menuBox.offset()?.top || 0;
+				const avail = Math.max(260, window.innerHeight - top - 12);
+
+				// >>> Scroll TUNGGAL di UL
+				$ul.css({
+					maxHeight: avail + "px",
+					overflowY: "auto",
+					overflowX: "hidden",
+				});
+
+				// item jangan dikunci tinggi
+				$ul.children("li").css({ height: "auto", overflow: "visible" });
+			});
+		},
 	});
+	// === flag menu terbuka
+	let colMenuOpen = false;
+
+	// SETIAP KALI menu SELESAI dibuka → pasang scroll di UL & matikan auto-close
+	$("#jqxgrid").on("columnmenuopened", function (e) {
+		colMenuOpen = true;
+
+		const $ul = $(e.args.menu); // <ul class="jqx-menu-ul">
+		const $menuBox = $ul.closest(".jqx-menu"); // container popup
+
+		// cegah auto close oleh jqxMenu
+		try {
+			$ul.jqxMenu({ autoCloseOnClick: false, autoCloseOnMouseLeave: false });
+		} catch {}
+
+		// batas tinggi sesuai viewport → UL yang scroll
+		const top = $menuBox.offset()?.top || 0;
+		const avail = Math.max(260, window.innerHeight - top - 12);
+		$ul.css({
+			maxHeight: avail + "px",
+			overflowY: "auto",
+			overflowX: "hidden",
+		});
+		$ul.children("li").css({ height: "auto", overflow: "visible" });
+	});
+
+	// saat menu ditutup → reset flag (styling boleh dibiarkan)
+	$("#jqxgrid").on("columnmenuclosed", function () {
+		colMenuOpen = false;
+	});
+
+	// >>> KUNCI: cegat event dari popup dropdown jqx yang dirender di <body>
+	$(document).on(
+		"mousedown.jqxcolmenu click.jqxcolmenu wheel.jqxcolmenu",
+		function (ev) {
+			if (!colMenuOpen) return;
+			if (
+				$(ev.target).closest(".jqx-popup, .jqx-listbox, .jqx-dropdownlist")
+					.length
+			) {
+				ev.stopPropagation(); // jangan biarkan bubbling menutup menu
+			}
+		}
+	);
+
 	// Global Search: filter
 	let globalSearchTimer;
 	$("#globalSearch").on("input", function () {
