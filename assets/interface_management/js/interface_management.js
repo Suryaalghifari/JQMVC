@@ -225,7 +225,6 @@ $(function () {
 						.appendTo($bar)
 						.jqxButton();
 
-					// >>>> UKUR ULANG TINGGI LIST SETELAH SEMUA ELEMEN TERBUAT
 					function resizeListArea() {
 						const $dropdown = $(panel).closest(
 							".jqx-menu-dropdown, .jqx-menu-content, .jqx-menu"
@@ -289,7 +288,6 @@ $(function () {
 					});
 					const $li = $(panel).closest("li");
 					if ($li.length) {
-						// hapus style height bawaan, lalu paksa auto pakai !important
 						$li[0].style.removeProperty("height");
 						$li[0].style.setProperty("height", "auto", "important");
 						$li.css({ overflow: "visible" });
@@ -378,42 +376,36 @@ $(function () {
 			{ datafield: "mrtg_status", hidden: true, filterable: true },
 		],
 		columnmenuopening: function (menu /* <ul> */) {
-			const $ul = $(menu); // <-- ini UL yang benar
-			const $menuBox = $ul.closest(".jqx-menu"); // kotak menu jqx
+			const $ul = $(menu);
+			const $menuBox = $ul.closest(".jqx-menu");
 
-			// biarkan jqx hitung layout dulu, baru kita set scroll
 			requestAnimationFrame(() => {
 				const top = $menuBox.offset()?.top || 0;
 				const avail = Math.max(260, window.innerHeight - top - 12);
 
-				// >>> Scroll TUNGGAL di UL
 				$ul.css({
 					maxHeight: avail + "px",
 					overflowY: "auto",
 					overflowX: "hidden",
 				});
 
-				// item jangan dikunci tinggi
 				$ul.children("li").css({ height: "auto", overflow: "visible" });
 			});
 		},
 	});
-	// === flag menu terbuka
+
 	let colMenuOpen = false;
 
-	// SETIAP KALI menu SELESAI dibuka → pasang scroll di UL & matikan auto-close
 	$("#jqxgrid").on("columnmenuopened", function (e) {
 		colMenuOpen = true;
 
-		const $ul = $(e.args.menu); // <ul class="jqx-menu-ul">
-		const $menuBox = $ul.closest(".jqx-menu"); // container popup
+		const $ul = $(e.args.menu);
+		const $menuBox = $ul.closest(".jqx-menu");
 
-		// cegah auto close oleh jqxMenu
 		try {
 			$ul.jqxMenu({ autoCloseOnClick: false, autoCloseOnMouseLeave: false });
 		} catch {}
 
-		// batas tinggi sesuai viewport → UL yang scroll
 		const top = $menuBox.offset()?.top || 0;
 		const avail = Math.max(260, window.innerHeight - top - 12);
 		$ul.css({
@@ -424,12 +416,10 @@ $(function () {
 		$ul.children("li").css({ height: "auto", overflow: "visible" });
 	});
 
-	// saat menu ditutup → reset flag (styling boleh dibiarkan)
 	$("#jqxgrid").on("columnmenuclosed", function () {
 		colMenuOpen = false;
 	});
 
-	// >>> KUNCI: cegat event dari popup dropdown jqx yang dirender di <body>
 	$(document).on(
 		"mousedown.jqxcolmenu click.jqxcolmenu wheel.jqxcolmenu",
 		function (ev) {
@@ -438,7 +428,7 @@ $(function () {
 				$(ev.target).closest(".jqx-popup, .jqx-listbox, .jqx-dropdownlist")
 					.length
 			) {
-				ev.stopPropagation(); // jangan biarkan bubbling menutup menu
+				ev.stopPropagation();
 			}
 		}
 	);

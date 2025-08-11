@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>JQtabels - CRUD</title>
+    <title>Interface Management</title>
     <link rel="icon" type="image/png" href="<?= base_url('assets/interface_management/images/logo.png') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/interface_management/css/jqx.base.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/interface_management/css/jqx.office.css') ?>">
