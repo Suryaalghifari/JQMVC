@@ -17,9 +17,15 @@
 			{ name: "mrtg_status", type: "string" },
 		],
 		url: IM.cfg.baseUrl + "api/services_get",
+		type: "GET",
 	};
 
 	IM.dataAdapter = new $.jqx.dataAdapter(source, {
+		formatData: function (data) {
+			data._ = Date.now();
+			return data;
+		},
+
 		beforeLoadComplete(records) {
 			records.forEach(function (row) {
 				const status = String(row.rrd_status || "")
@@ -55,10 +61,15 @@
 			});
 			return records;
 		},
+
 		loadComplete(records) {
 			IM.state = { allRecords: Array.isArray(records) ? records : [] };
 			if (IM.KPI && IM.KPI.update) IM.KPI.update();
-			if (IM.KPI && IM.KPI.updateTotals) IM.KPI.updateTotals(); // alias kompatibilitas
+			if (IM.KPI && IM.KPI.updateTotals) IM.KPI.updateTotals();
+		},
+
+		loadError: function (xhr, status, error) {
+			console.error("loadError", status, error, xhr?.responseText);
 		},
 	});
 })(window.IM, jQuery);

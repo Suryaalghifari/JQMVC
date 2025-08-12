@@ -116,14 +116,12 @@
 				columnProps,
 				rowData
 			) {
-				// terima "true"/"false" (string), juga boolean/angka
 				const isTrue =
 					value === true || value === "true" || value === 1 || value === "1";
 
 				const icon = isTrue ? "bi-check-circle-fill" : "bi-x-circle-fill";
 				const colorClass = isTrue ? "im-ok" : "im-bad";
 
-				// ubah default html
 				const $el = $(defaultHtml);
 				$el.css("text-align", "center");
 				$el.html(

@@ -128,4 +128,57 @@ class Interface_management_api extends MX_Controller
             echo json_encode(['success' => false, 'message' => 'Directory tidak ditemukan']);
         }
     }
+    public function services_import_bulk()
+    {
+        $payload = json_decode($this->input->raw_input_stream, true);
+        $rows = $payload['rows'] ?? [];
+
+        $clean = [];
+        foreach ($rows as $r) {
+            $id        = isset($r['id']) ? trim((string)$r['id']) : '';
+            $peering   = trim($r['peering']   ?? '');
+            $location  = trim($r['location']  ?? '');
+            $interface = trim($r['interface'] ?? '');
+            $pop       = trim($r['pop']       ?? ($r['pop_site'] ?? ''));
+
+            if ($peering === '' || $location === '' || $interface === '' || $pop === '') {
+                $r['_valid'] = false;
+                $r['_error'] = 'peering, location, interface, dan pop wajib';
+                $clean[] = $r;
+                continue;
+            }
+
+            $data = [
+                'peering'    => $peering,
+                'location'   => $location,
+                'interface'  => $interface,
+                'pop'        => $pop,
+
+                // kolom lain
+                'rrd_path'   => $r['rrd_path']   ?? null,
+                'rrd_alias'  => $r['rrd_alias']  ?? null,
+                'rrd_status' => $r['rrd_status'] ?? null,
+                'service'    => $r['service']    ?? null,
+            ];
+
+            // Capacity -> float
+            if (isset($r['Capacity']) && $r['Capacity'] !== '') {
+                $raw = preg_replace('/[^\d\.\-]/', '', (string)$r['Capacity']);
+                $data['Capacity'] = $raw === '' ? null : (float)$raw;
+            } else {
+                $data['Capacity'] = null;
+            }
+
+            $data['_valid'] = true;
+            if ($id !== '' && ctype_digit($id)) {
+                $data['_id'] = (int)$id; // prefer update by ID jika ada
+            }
+            $clean[] = $data;
+        }
+
+        $result = $this->Interface_management_model->bulk_import_with_pop($clean);
+
+        return $this->output->set_content_type('application/json')
+            ->set_output(json_encode($result));
+    }
 }

@@ -1,4 +1,19 @@
 (function (IM, $) {
+	IM.Import = IM.Import || {
+		headerMap: {
+			id: ["ID", "Id", "id"],
+			peering: ["Peering", "peering"],
+			location: ["Location", "location"],
+			interface: ["Interface", "interface"],
+			pop_site: ["POP", "pop_site", "POP Site", "Pop"],
+			rrd_path: ["RRD Path", "rrd_path"],
+			rrd_alias: ["RRD Alias", "rrd_alias"],
+			rrd_status: ["RRD Status", "rrd_status"],
+			Capacity: ["Capacity", "capacity"],
+			service: ["Service", "service"],
+		},
+	};
+
 	IM.Actions = {
 		addRow() {
 			const G = IM.cfg.GRID;
@@ -47,8 +62,8 @@
 
 		deleteSelected() {
 			const G = IM.cfg.GRID;
-			const selectedIndexes = $(G).jqxGrid("getselectedrowindexes") || [];
-			if (!selectedIndexes.length) {
+			const selected = $(G).jqxGrid("getselectedrowindexes") || [];
+			if (!selected.length) {
 				showNotif({
 					icon: "warning",
 					title: "Pilih data yang mau dihapus (centang di kiri)!",
@@ -59,10 +74,11 @@
 				});
 				return;
 			}
-			const idsToDelete = selectedIndexes
-				.map((idx) => $(G).jqxGrid("getrowdata", idx)?.id)
-				.filter((id) => !!id);
-			if (!idsToDelete.length) {
+
+			const ids = selected
+				.map((i) => $(G).jqxGrid("getrowdata", i)?.id)
+				.filter(Boolean);
+			if (!ids.length) {
 				showNotif({
 					icon: "warning",
 					title: "Tidak ada data valid untuk dihapus!",
@@ -74,44 +90,31 @@
 				return;
 			}
 
-			confirmPermanentDelete(idsToDelete.length).then((result) => {
-				if (!result.isConfirmed) return;
+			confirmPermanentDelete(ids.length).then((res) => {
+				if (!res.isConfirmed) return;
 
-				let successCount = 0,
-					failCount = 0,
-					doneCount = 0;
+				let ok = 0,
+					fail = 0,
+					done = 0;
+				showLoading("Menghapus data…");
 
-				Swal.fire({
-					title: "Menghapus...",
-					text: "Sedang menghapus data, mohon tunggu.",
-					allowOutsideClick: false,
-					allowEscapeKey: false,
-					didOpen: () => {
-						Swal.showLoading();
-					},
-				});
-
-				idsToDelete.forEach((id) => {
+				ids.forEach((id) => {
 					IM.api
 						.remove(id)
-						.done((response) => {
-							response.success ? successCount++ : failCount++;
-						})
-						.fail(() => {
-							failCount++;
-						})
+						.done((r) => (r.success ? ok++ : fail++))
+						.fail(() => fail++)
 						.always(() => {
-							doneCount++;
-							if (doneCount === idsToDelete.length) {
+							done++;
+							if (done === ids.length) {
 								Swal.close();
 								$(G).jqxGrid("updatebounddata");
 								showNotif({
 									icon: "success",
 									title: "Hapus Data",
-									text: `${successCount} data berhasil dihapus, ${failCount} gagal.`,
-									position: "center",
+									text: `${ok} data berhasil dihapus, ${fail} gagal.`,
 									toast: true,
 									timer: 2200,
+									position: "center",
 								});
 							}
 						});
@@ -119,6 +122,114 @@
 			});
 		},
 
+		openImport() {
+			const $f = $("#fileImport");
+			if (!$f.length) {
+				showNotif({
+					icon: "error",
+					title: "Input file tidak ditemukan",
+					text: "#fileImport belum ada di view.",
+				});
+				return;
+			}
+			$f.trigger("click");
+		},
+
+		async handleImportFile(file) {
+			if (!file) return;
+			if (typeof XLSX === "undefined") {
+				showNotif({
+					icon: "error",
+					title: "Import gagal",
+					text: "Library XLSX belum ter-load.",
+				});
+				return;
+			}
+
+			showLoading("Membaca file…");
+			const buf = await file.arrayBuffer();
+			const wb = XLSX.read(buf, { type: "array" });
+			const ws = wb.Sheets[wb.SheetNames[0]];
+			const raw = XLSX.utils.sheet_to_json(ws, { defval: "" });
+
+			const map = IM.Import.headerMap;
+			const rowsMapped = raw.map((r) => {
+				const o = {};
+				Object.keys(map).forEach((field) => {
+					const alias = map[field].find((h) =>
+						Object.prototype.hasOwnProperty.call(r, h)
+					);
+					o[field] = alias ? r[alias] : "";
+				});
+				return o;
+			});
+
+			const valids = [],
+				errors = [];
+			rowsMapped.forEach((r, idx) => {
+				const err = [];
+				if (!String(r.peering).trim()) err.push("peering wajib");
+				if (!String(r.location).trim()) err.push("location wajib");
+				if (!String(r.interface).trim()) err.push("interface wajib");
+				if (!String(r.pop_site).trim()) err.push("pop wajib");
+
+				if (r.Capacity !== "" && r.Capacity != null) {
+					const rawCap = String(r.Capacity).replace(/[^\d.-]/g, "");
+					if (rawCap !== "" && isNaN(Number(rawCap)))
+						err.push("Capacity tidak valid");
+					else r.Capacity = rawCap === "" ? "" : Number(rawCap);
+				}
+
+				if (err.length) errors.push({ row: idx + 2, errors: err });
+				else valids.push(r);
+			});
+
+			Swal.close();
+
+			const go = await showImportPreview(valids, errors, { compact: true });
+			if (!go.isConfirmed || !valids.length) return;
+
+			const payloadRows = valids.map((r) => ({
+				id: r.id || null,
+				peering: r.peering,
+				location: r.location,
+				interface: r.interface,
+				pop: r.pop_site,
+				rrd_path: r.rrd_path || null,
+				rrd_alias: r.rrd_alias || null,
+				rrd_status: r.rrd_status || null,
+				Capacity: r.Capacity ?? null,
+				service: r.service || null,
+			}));
+
+			showImportWorking(payloadRows.length);
+
+			const CHUNK = 500;
+			let inserted = 0,
+				updated = 0,
+				skipped = 0,
+				done = 0;
+
+			for (let i = 0; i < payloadRows.length; i += CHUNK) {
+				const part = payloadRows.slice(i, i + CHUNK);
+				try {
+					const resp = await IM.api.importBulk(part);
+					inserted += resp.inserted || 0;
+					updated += resp.updated || 0;
+					skipped += resp.skipped || 0;
+					done += part.length;
+					updateImportProgress(done, payloadRows.length);
+				} catch (e) {
+					console.error(e);
+				}
+			}
+
+			Swal.close();
+			showImportDoneToast({ inserted, updated, skipped });
+			IM.Actions.refresh(false);
+		},
+
+		// export file
 		openExportDialog() {
 			const G = IM.cfg.GRID;
 			const rowsDisplay = $(G).jqxGrid("getdisplayrows") || [];
@@ -130,8 +241,8 @@
 
 			chooseExportFormat(count).then((res) => {
 				if (!res.isConfirmed) return;
-				confirmExport(count, res.value.type).then((r) => {
-					if (!r.isConfirmed) return;
+				confirmExport(count, res.value.type).then((c) => {
+					if (!c.isConfirmed) return;
 					IM.Actions._doExport(res.value.type);
 				});
 			});
@@ -141,6 +252,7 @@
 			const G = IM.cfg.GRID;
 			const fileBase =
 				"interface_management_" + new Date().toISOString().slice(0, 10);
+
 			if (typeof XLSX === "undefined") {
 				showNotif({
 					icon: "error",
@@ -166,6 +278,7 @@
 				header: headers,
 				skipHeader: false,
 			});
+
 			const capIdx = cols.findIndex(
 				(c) => String(c.field).toLowerCase() === "capacity"
 			);
@@ -188,14 +301,12 @@
 						}
 					}
 				}
-
 				const wb = XLSX.utils.book_new();
 				XLSX.utils.book_append_sheet(wb, ws, "Data");
 				ws["!cols"] = headers.map((h) => ({
 					wch: Math.max(12, String(h).length + 2),
 				}));
 				XLSX.writeFile(wb, fileBase + ".xlsx");
-
 				setTimeout(() => {
 					Swal.close();
 					showNotif({
@@ -233,7 +344,6 @@
 				a.click();
 				a.remove();
 				URL.revokeObjectURL(a.href);
-
 				setTimeout(() => {
 					Swal.close();
 					showNotif({ icon: "success", title: "Export CSV berhasil diunduh." });
@@ -248,11 +358,17 @@
 		wireButtons() {
 			$("#btnAdd").on("click", IM.Actions.addRow);
 			$("#btnDelete").on("click", IM.Actions.deleteSelected);
-			$("#btnRefresh").on("click", function (e) {
-				if (e.altKey) IM.Actions.refresh(false);
-				else IM.Actions.refresh(true);
-			});
+			$("#btnRefresh").on("click", (e) =>
+				e.altKey ? IM.Actions.refresh(false) : IM.Actions.refresh(true)
+			);
 			$("#btnExport").off("click").on("click", IM.Actions.openExportDialog);
+			$("#btnImport").off("click").on("click", IM.Actions.openImport);
+			$("#fileImport")
+				.off("change")
+				.on("change", function (e) {
+					IM.Actions.handleImportFile(e.target.files?.[0]);
+					this.value = "";
+				});
 		},
 
 		wireCellEdit() {
@@ -260,24 +376,23 @@
 			$(G).on("cellendedit", function (event) {
 				const { datafield, rowindex, value, oldvalue } = event.args;
 				const rowdata = $(G).jqxGrid("getrowdata", rowindex);
-
 				rowdata[datafield] = value;
 				if (value === oldvalue) return;
 
-				// ADD
 				if (!rowdata.id || rowdata.id === "") {
-					const requiredFields = [
+					const req = [
 						{ key: "peering", label: "Peering" },
 						{ key: "location", label: "Location" },
 						{ key: "interface", label: "Interface" },
 						{ key: "pop_site", label: "POP" },
 					];
-					const emptyFields = requiredFields.filter((f) => !rowdata[f.key]);
-					if (emptyFields.length > 0) {
-						setTimeout(() => {
-							$(G).jqxGrid("begincelledit", rowindex, emptyFields[0].key);
-						}, 10);
-						const fieldsText = emptyFields.map((f) => f.label).join(", ");
+					const empty = req.filter((f) => !rowdata[f.key]);
+					if (empty.length) {
+						setTimeout(
+							() => $(G).jqxGrid("begincelledit", rowindex, empty[0].key),
+							10
+						);
+						const fieldsText = empty.map((f) => f.label).join(", ");
 						showNotif({
 							icon: "error",
 							title: "Gagal tambah data",
@@ -291,34 +406,29 @@
 					}
 					IM.api
 						.add(rowdata)
-						.done(function (response) {
-							if (response.success) {
+						.done((r) => {
+							if (r.success) {
 								showNotif({
 									icon: "success",
 									title: "Data berhasil ditambah!",
-									text: "Data baru dapat dilihat di bagian bawah tabel.",
-									position: "center",
 									toast: true,
 									timer: 2000,
+									position: "center",
 								});
 								$(G).jqxGrid("updatebounddata");
 							} else {
 								showNotif({
 									icon: "error",
 									title: "Gagal tambah data",
-									text: response.message || "Unknown error",
-									position: "center",
-									showConfirmButton: true,
-									confirmButtonText: "Tutup",
-									timer: null,
+									text: r.message || "Unknown error",
 								});
 							}
 						})
-						.fail(function (xhr, status, error) {
+						.fail((xhr, _s, err) => {
 							showNotif({
 								icon: "error",
 								title: "Terjadi error!",
-								html: `<div style="text-align:left"><b>${error}</b><hr><pre style="max-width:300px;white-space:pre-wrap;">${xhr.responseText}</pre></div>`,
+								html: `<div style="text-align:left"><b>${err}</b><hr><pre style="max-width:300px;white-space:pre-wrap;">${xhr.responseText}</pre></div>`,
 								position: "center",
 								showConfirmButton: true,
 								confirmButtonText: "Tutup",
@@ -328,11 +438,10 @@
 					return;
 				}
 
-				// UPDATE
 				IM.api
 					.update(rowdata.id, rowdata)
-					.done(function (response) {
-						if (response.success) {
+					.done((r) => {
+						if (r.success) {
 							showNotif({
 								icon: "success",
 								title: "Berhasil!",
@@ -345,15 +454,15 @@
 							showNotif({
 								icon: "error",
 								title: "Gagal update data!",
-								text: response.message || "Unknown error",
+								text: r.message || "Unknown error",
 							});
 						}
 					})
-					.fail(function (xhr, status, error) {
+					.fail((xhr, _s, err) => {
 						showNotif({
 							icon: "error",
 							title: "Terjadi error update!",
-							html: `<div style="text-align:left"><b>${error}</b><hr><pre style="max-width:300px;white-space:pre-wrap;">${xhr.responseText}</pre></div>`,
+							html: `<div style="text-align:left"><b>${err}</b><hr><pre style="max-width:300px;white-space:pre-wrap;">${xhr.responseText}</pre></div>`,
 						});
 					});
 			});

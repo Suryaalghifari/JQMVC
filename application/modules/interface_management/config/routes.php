@@ -8,3 +8,5 @@ $route['api/services_update/(:num)']['put'] = 'interface_management/interface_ma
 $route['api/services_delete/(:num)']['delete'] = 'interface_management/interface_management_api/services_delete/$1';
 $route['api/services_directory/(:num)'] = 'interface_management/interface_management_api/services_directory/$1';
 
+$route['api/services_import_bulk'] = 'interface_management/interface_management_api/services_import_bulk';
+

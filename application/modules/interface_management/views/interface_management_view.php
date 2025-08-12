@@ -102,6 +102,8 @@
           <button id="btnDelete" class="btn-danger"><i class="bi bi-trash"></i> Hapus Data</button>
           <button id="btnRefresh" class="btn-secondary"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
           <button id="btnExport" class="btn-excel"><i class="bi bi-file-earmark-spreadsheet"></i> Export</button>
+          <button id="btnImport" class="btn-secondary"><i class="bi bi-upload"></i> Import</button>
+          <input id="fileImport" type="file" accept=".xlsx,.csv" style="display:none">
         </div>
       </div>
 
@@ -109,8 +111,5 @@
     </div>
 
   </div>
-
-  <!-- ===== VENDOR JS (URUTAN WAJIB) ===== -->
-  
 </body>
 </html>

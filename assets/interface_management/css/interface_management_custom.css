@@ -290,3 +290,46 @@
 .im-bad {
 	color: #dc2626;
 } /* merah */
+
+/* Ukuran & padding per modal */
+.swal-xs {
+	max-width: 360px !important;
+	padding: 1em 1em !important;
+	font-size: 0.98em !important;
+}
+.swal-sm {
+	max-width: 440px !important;
+	padding: 1.2em 1.1em !important;
+}
+.swal-md {
+	max-width: 560px !important;
+	padding: 1.3em 1.2em !important;
+}
+.swal-lg {
+	max-width: 760px !important;
+	padding: 1.4em 1.2em !important;
+}
+
+/* Kompakkan tombol hanya saat kita minta */
+.swal-compact .swal2-styled {
+	font-size: 0.95em !important;
+	padding: 0.5em 1.2em !important;
+}
+
+/* Tambahan untuk dialog import */
+.swal-import .metrics {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+.swal-import table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.95em;
+}
+.swal-import th,
+.swal-import td {
+	padding: 8px;
+	border-bottom: 1px solid #e5e7eb;
+	text-align: left;
+}
