@@ -74,16 +74,9 @@
 				return;
 			}
 
-			Swal.fire({
-				title: "Yakin hapus?",
-				text: `Yakin hapus ${idsToDelete.length} data ini?`,
-				icon: "question",
-				showCancelButton: true,
-				confirmButtonText: "Ya, hapus!",
-				cancelButtonText: "Batal",
-				position: "center",
-			}).then((result) => {
+			confirmPermanentDelete(idsToDelete.length).then((result) => {
 				if (!result.isConfirmed) return;
+
 				let successCount = 0,
 					failCount = 0,
 					doneCount = 0;
@@ -126,6 +119,132 @@
 			});
 		},
 
+		openExportDialog() {
+			const G = IM.cfg.GRID;
+			const rowsDisplay = $(G).jqxGrid("getdisplayrows") || [];
+			const count = rowsDisplay.length;
+			if (!count) {
+				showNotif({ icon: "warning", title: "Tidak ada data untuk diekspor." });
+				return;
+			}
+
+			chooseExportFormat(count).then((res) => {
+				if (!res.isConfirmed) return;
+				confirmExport(count, res.value.type).then((r) => {
+					if (!r.isConfirmed) return;
+					IM.Actions._doExport(res.value.type);
+				});
+			});
+		},
+
+		_doExport(type) {
+			const G = IM.cfg.GRID;
+			const fileBase =
+				"interface_management_" + new Date().toISOString().slice(0, 10);
+			if (typeof XLSX === "undefined") {
+				showNotif({
+					icon: "error",
+					title: "Export gagal",
+					text: "Library XLSX belum ter-load.",
+				});
+				return;
+			}
+
+			const src = $(G).jqxGrid("getdisplayrows") || [];
+			if (!src.length) {
+				showNotif({ icon: "warning", title: "Tidak ada data untuk diekspor." });
+				return;
+			}
+
+			const cols = IM.utils.getExportColumns();
+			const headers = cols.map((c) => c.label);
+			const rows = IM.utils.pickForExport(src, cols);
+
+			showLoading();
+
+			const ws = XLSX.utils.json_to_sheet(rows, {
+				header: headers,
+				skipHeader: false,
+			});
+			const capIdx = cols.findIndex(
+				(c) => String(c.field).toLowerCase() === "capacity"
+			);
+			const capHeader = capIdx >= 0 ? headers[capIdx] : null;
+
+			if (type === "xlsx") {
+				if (capIdx >= 0 && ws["!ref"]) {
+					const range = XLSX.utils.decode_range(ws["!ref"]);
+					for (let R = 1; R <= range.e.r; R++) {
+						const addr = XLSX.utils.encode_cell({ r: R, c: capIdx });
+						const cell = ws[addr];
+						if (!cell) continue;
+						let v = cell.v;
+						if (typeof v === "string") v = v.replace(/[^\d.-]/g, "");
+						const num = Number(v);
+						if (!isNaN(num)) {
+							cell.v = num;
+							cell.t = "n";
+							cell.z = "#,##0";
+						}
+					}
+				}
+
+				const wb = XLSX.utils.book_new();
+				XLSX.utils.book_append_sheet(wb, ws, "Data");
+				ws["!cols"] = headers.map((h) => ({
+					wch: Math.max(12, String(h).length + 2),
+				}));
+				XLSX.writeFile(wb, fileBase + ".xlsx");
+
+				setTimeout(() => {
+					Swal.close();
+					showNotif({
+						icon: "success",
+						title: "Export XLSX berhasil diunduh.",
+					});
+				}, 250);
+				return;
+			}
+
+			if (type === "csv") {
+				let csvRows = rows;
+				if (capHeader) {
+					csvRows = rows.map((r) => {
+						const o = { ...r };
+						if (o[capHeader] != null && o[capHeader] !== "") {
+							const raw = String(o[capHeader]).replace(/[^\d.-]/g, "");
+							o[capHeader] = '="' + raw + '"';
+						}
+						return o;
+					});
+				}
+				const wsCSV = XLSX.utils.json_to_sheet(csvRows, {
+					header: headers,
+					skipHeader: false,
+				});
+				const csv = XLSX.utils.sheet_to_csv(wsCSV, { FS: ";" });
+				const blob = new Blob(["\uFEFF" + csv], {
+					type: "text/csv;charset=utf-8",
+				});
+				const a = document.createElement("a");
+				a.href = URL.createObjectURL(blob);
+				a.download = fileBase + ".csv";
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+				URL.revokeObjectURL(a.href);
+
+				setTimeout(() => {
+					Swal.close();
+					showNotif({ icon: "success", title: "Export CSV berhasil diunduh." });
+				}, 250);
+				return;
+			}
+
+			Swal.close();
+			showNotif({ icon: "error", title: "Format tidak didukung." });
+		},
+
 		wireButtons() {
 			$("#btnAdd").on("click", IM.Actions.addRow);
 			$("#btnDelete").on("click", IM.Actions.deleteSelected);
@@ -133,6 +252,7 @@
 				if (e.altKey) IM.Actions.refresh(false);
 				else IM.Actions.refresh(true);
 			});
+			$("#btnExport").off("click").on("click", IM.Actions.openExportDialog);
 		},
 
 		wireCellEdit() {

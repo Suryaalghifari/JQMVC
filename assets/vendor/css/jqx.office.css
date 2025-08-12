@@ -501,17 +501,25 @@
 	font-size: 0.97em !important;
 	padding: 0.5em 1.3em !important;
 }
-/* Pastikan kontainer dropdown bisa scroll */
-#jqxgrid .jqx-menu-dropdown,
-#jqxgrid .jqx-menu-content {
-	max-height: 70vh !important;
-	overflow-y: auto !important;
-	overflow-x: hidden !important;
+/* Scoped ke popup konfirmasi delete */
+.swal-compact.swal2-popup {
+	min-width: 320px;
+	max-width: 360px;
 }
-
-/* Biarkan item li mengikuti tinggi konten */
-#jqxgrid .jqx-menu-dropdown ul > li,
-#jqxgrid .jqx-menu-content ul > li {
-	height: auto !important;
-	overflow: visible !important;
+.swal-compact .swl-text {
+	margin: 0.2em 0 0.6em;
+	line-height: 1.35;
+}
+.swal-compact .swl-sub {
+	color: #666;
+	font-size: 0.92em;
+}
+.swal-compact .ack {
+	display: flex;
+	gap: 0.6em;
+	align-items: center;
+	margin-top: 0.4em;
+}
+.swal-compact .ack input {
+	transform: translateY(1px);
 }

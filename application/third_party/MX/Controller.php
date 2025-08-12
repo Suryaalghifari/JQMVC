@@ -46,18 +46,18 @@ class MX_Controller
      * @method __construct
      */
     public function __construct()
-    {
-        $class = str_replace(CI::$APP->config->item('controller_suffix'), '', get_class($this));
-        log_message('debug', $class.' MX_Controller Initialized');
-        Modules::$registry[strtolower($class)] = $this;
+{
+    $suffix = CI::$APP->config->item('controller_suffix') ?? '';
+    $class  = str_replace($suffix, '', get_class($this));
 
-        // copy a loader instance and initialize
-        $this->load = clone load_class('Loader');
-        $this->load->initialize($this);
+    log_message('debug', $class.' MX_Controller Initialized');
+    Modules::$registry[strtolower($class)] = $this;
 
-        // autoload module items
-        $this->load->_autoloader($this->autoload);
-    }
+    $this->load = clone load_class('Loader');
+    $this->load->initialize($this);
+    $this->load->_autoloader($this->autoload);
+}
+
 
     /**
      * [__get description]

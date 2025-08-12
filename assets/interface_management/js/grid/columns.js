@@ -29,7 +29,7 @@
 			cellsalign: "center",
 			filtertype: "custom",
 			createfilterpanel: function (datafield, panel) {
-				IM.LocationFilter.create(datafield, panel); // ✅
+				IM.LocationFilter.create(datafield, panel);
 			},
 		},
 
@@ -108,6 +108,32 @@
 			cellsalign: "center",
 			filtertype: "checkedlist",
 			editable: false,
+			cellsrenderer: function (
+				row,
+				column,
+				value,
+				defaultHtml,
+				columnProps,
+				rowData
+			) {
+				// terima "true"/"false" (string), juga boolean/angka
+				const isTrue =
+					value === true || value === "true" || value === 1 || value === "1";
+
+				const icon = isTrue ? "bi-check-circle-fill" : "bi-x-circle-fill";
+				const colorClass = isTrue ? "im-ok" : "im-bad";
+
+				// ubah default html
+				const $el = $(defaultHtml);
+				$el.css("text-align", "center");
+				$el.html(
+					`<i class="bi ${icon} ${colorClass}" style="font-size:18px" title="${
+						isTrue ? "Ya" : "Tidak"
+					}"></i>`
+				);
+
+				return $el[0].outerHTML;
+			},
 		},
 		{ datafield: "_search", hidden: true, filterable: true },
 		{ datafield: "mrtg_status", hidden: true, filterable: true },

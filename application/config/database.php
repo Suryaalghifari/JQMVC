@@ -75,22 +75,24 @@ $query_builder = TRUE;
 
 $db['default'] = array(
     'dsn'      => '',
-    'hostname' => 'localhost',
-    'username' => 'root',         
-    'password' => '',            
-    'database' => 'db_telkom_traffic', 
+    'hostname' => '127.0.0.1',     // pakai IP, bukan 'localhost'
+    'username' => 'root',
+    'password' => '',
+    'database' => 'db_telkom_traffic',
     'dbdriver' => 'mysqli',
     'dbprefix' => '',
     'pconnect' => FALSE,
     'db_debug' => (ENVIRONMENT !== 'production'),
     'cache_on' => FALSE,
     'cachedir' => '',
-    'char_set' => 'utf8',
+    'char_set' => 'utf8',          // kalau butuh emoji, pakai utf8mb4
     'dbcollat' => 'utf8_general_ci',
     'swap_pre' => '',
     'encrypt' => FALSE,
     'compress' => FALSE,
     'stricton' => FALSE,
     'failover' => array(),
-    'save_queries' => TRUE
+    'save_queries' => TRUE,
+    // 'port' => 3307, // UNCOMMENT kalau port MySQL Laragon kamu bukan 3306
 );
+

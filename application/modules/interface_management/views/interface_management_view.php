@@ -11,14 +11,21 @@
 <link rel="stylesheet" href="<?= base_url('assets/vendor/css/jqx.base.css') ?>">
 <link rel="stylesheet" href="<?= base_url('assets/vendor/css/jqx.office.css') ?>">
 <link rel="stylesheet" href="<?= base_url('assets/interface_management/css/interface_management_custom.css') ?>">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
 
 <!-- base_url dari PHP -->
 <script>var base_url = "<?= base_url() ?>";</script>
 
 <!-- VENDOR JS -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
 <script src="<?= base_url('assets/vendor/jqwidgets/jqx-all.js') ?>"></script>
+<script src="<?= base_url('assets/vendor/jqwidgets/jqxdata.export.js') ?>"></script>
+<script src="<?= base_url('assets/vendor/jqwidgets/jqxgrid.export.js') ?>"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 
 <!-- APP JS (modular) -->
 <script src="<?= base_url('assets/interface_management/js/core/namespace.js') ?>"></script>
@@ -39,6 +46,7 @@
 
 <script src="<?= base_url('assets/interface_management/js/notif/swalNotif.js') ?>"></script>
 <script src="<?= base_url('assets/interface_management/js/main.js') ?>"></script>
+
 
 
 </head>
@@ -66,6 +74,17 @@
         <div class="kpi-value text-red" id="kpi-mrtg-off">0</div>
         <div class="kpi-sub">Sedang mati</div>
       </div>
+      <div class="card kpi" id="card-zt-true">
+        <div class="kpi-title">Zero Traffic (True)</div>
+        <div class="kpi-value text-green" id="kpi-zt-true">0</div>
+        <div class="kpi-sub">zero_traffic = true</div>
+      </div>
+
+      <div class="card kpi" id="card-zt-false">
+        <div class="kpi-title">Zero Traffic (False)</div>
+        <div class="kpi-value text-red" id="kpi-zt-false">0</div>
+        <div class="kpi-sub">zero_traffic = false</div>
+      </div>
     </div>
 
     <div class="grid-card">
@@ -82,6 +101,7 @@
           <button id="btnAdd" class="btn-primary"><i class="bi bi-plus-lg"></i> Tambah Data</button>
           <button id="btnDelete" class="btn-danger"><i class="bi bi-trash"></i> Hapus Data</button>
           <button id="btnRefresh" class="btn-secondary"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+          <button id="btnExport" class="btn-excel"><i class="bi bi-file-earmark-spreadsheet"></i> Export</button>
         </div>
       </div>
 
