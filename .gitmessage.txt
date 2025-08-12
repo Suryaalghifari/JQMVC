@@ -1,0 +1,19 @@
+# === Commit Title ===
+# Format: <type>: <short description>
+# Example: feat: add import CSV/XLSX and icon button
+
+feat: 
+
+# === Commit Body (optional) ===
+# Jelaskan detail perubahan, alasan, atau konteksnya.
+# Gunakan tanda minus (-) untuk poin list.
+# Contoh:
+# - Add import functionality for CSV and XLSX files
+# - Add icon button to trigger file import action
+
+- 
+- 
+
+# === Footer (optional) ===
+# Untuk issue tracker atau merge request ID.
+# Example: Closes #123

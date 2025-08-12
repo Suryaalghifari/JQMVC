@@ -40,9 +40,11 @@
 <script src="<?= base_url('assets/interface_management/js/grid/grid.js') ?>"></script>
 
 <script src="<?= base_url('assets/interface_management/js/features/kpi.js') ?>"></script>
+<script src="<?= base_url('assets/interface_management/js/features/edit.js') ?>"></script>
 <script src="<?= base_url('assets/interface_management/js/features/actions.js') ?>"></script>
 <script src="<?= base_url('assets/interface_management/js/features/search.js') ?>"></script>
 <script src="<?= base_url('assets/interface_management/js/features/directory.js') ?>"></script>
+
 
 <script src="<?= base_url('assets/interface_management/js/notif/swalNotif.js') ?>"></script>
 <script src="<?= base_url('assets/interface_management/js/main.js') ?>"></script>
@@ -104,6 +106,7 @@
           <button id="btnExport" class="btn-excel"><i class="bi bi-file-earmark-spreadsheet"></i> Export</button>
           <button id="btnImport" class="btn-secondary"><i class="bi bi-upload"></i> Import</button>
           <input id="fileImport" type="file" accept=".xlsx,.csv" style="display:none">
+          <button id="btnEdit" class="btn-secondary"><i class="bi bi-pencil-square"></i> Edit</button>
         </div>
       </div>
 
