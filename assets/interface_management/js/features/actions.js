@@ -188,6 +188,8 @@
 
 			const go = await showImportPreview(valids, errors, { compact: true });
 			if (!go.isConfirmed || !valids.length) return;
+			const sure = await confirmImport(valids.length);
+			if (!sure.isConfirmed) return;
 
 			const payloadRows = valids.map((r) => ({
 				id: r.id || null,
@@ -356,61 +358,38 @@
 		},
 
 		wireButtons() {
-			$("#btnAdd").on("click", IM.Actions.addRow);
-			$("#btnDelete").on("click", IM.Actions.deleteSelected);
-			$("#btnRefresh").on("click", (e) =>
-				e.altKey ? IM.Actions.refresh(false) : IM.Actions.refresh(true)
-			);
-			$("#btnExport").off("click").on("click", IM.Actions.openExportDialog);
-			$("#btnImport").off("click").on("click", IM.Actions.openImport);
+			$("#btnAdd")
+				.off("click.im-actions")
+				.on("click.im-actions", IM.Actions.addRow);
+
+			$("#btnDelete")
+				.off("click.im-actions")
+				.on("click.im-actions", IM.Actions.deleteSelected);
+
+			$("#btnRefresh")
+				.off("click.im-actions")
+				.on("click.im-actions", (e) =>
+					e.altKey ? IM.Actions.refresh(false) : IM.Actions.refresh(true)
+				);
+
+			$("#btnExport")
+				.off("click.im-actions")
+				.on("click.im-actions", IM.Actions.openExportDialog);
+
+			$("#btnImport")
+				.off("click.im-actions")
+				.on("click.im-actions", IM.Actions.openImport);
+
 			$("#fileImport")
-				.off("change")
-				.on("change", function (e) {
+				.off("change.im-actions")
+				.on("change.im-actions", function (e) {
 					IM.Actions.handleImportFile(e.target.files?.[0]);
 					this.value = "";
 				});
-			$("#btnEdit").off("click").on("click", IM.Edit.openForSelected);
-			// assets/interface_management/js/core/api.js
-			(function (IM, $) {
-				IM.api = {
-					list() {
-						return $.getJSON(IM.cfg.baseUrl + "api/services_get");
-					},
-					add(row) {
-						return $.ajax({
-							url: IM.cfg.baseUrl + "api/services_add",
-							type: "POST",
-							data: row,
-							dataType: "json",
-						});
-					},
-					update(id, row) {
-						return $.ajax({
-							url: IM.cfg.baseUrl + "api/services_update/" + id,
-							type: "PUT",
-							data: JSON.stringify(row),
-							dataType: "json",
-							contentType: "application/json; charset=utf-8",
-						});
-					},
-					remove(id) {
-						return $.ajax({
-							url: IM.cfg.baseUrl + "api/services_delete/" + id,
-							type: "DELETE",
-							dataType: "json",
-						});
-					},
-					importBulk(rows) {
-						return $.ajax({
-							url: IM.cfg.baseUrl + "api/services_import_bulk",
-							type: "POST",
-							data: JSON.stringify({ rows }),
-							dataType: "json",
-							contentType: "application/json; charset=utf-8",
-						});
-					},
-				};
-			})(window.IM, jQuery);
+
+			$("#btnEdit")
+				.off("click.im-actions")
+				.on("click.im-actions", IM.Edit.openForSelected);
 		},
 
 		wireCellEdit() {

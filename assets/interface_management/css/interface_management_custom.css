@@ -110,73 +110,158 @@
 	--pad: 18px;
 }
 
-/* Grid KPI jadi auto-fit, responsif */
+/* ====== Layout grid KPI: 3 → 2 → 1 kolom (sesuai screenshot) ====== */
 .cards {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 	gap: var(--gap);
 	margin: 12px 0 22px;
 }
 
-/* Kartu dasar */
-.card {
-	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	padding: var(--pad);
-	box-shadow: var(--shadow-1);
+/* desktop (normal / gambar-1): 3 kolom */
+@media (min-width: 1200px) {
+	.cards {
+		grid-template-columns: repeat(3, 1fr);
+	}
 }
 
-/* KPI look & feel */
+/* tablet (gambar-2): 2 kolom */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+	.cards {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+/* mobile: 1 kolom */
+@media (max-width: 767.98px) {
+	.cards {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ====== KPI Card look ====== */
 .card.kpi {
-	cursor: pointer;
+	position: relative;
+	border-radius: var(--radius);
+	padding: 18px 18px 46px; /* ruang bawah untuk pill */
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-1);
 	transition: transform 0.12s ease, box-shadow 0.12s ease,
 		border-color 0.12s ease;
+	background: #fff;
 }
+
 .card.kpi:hover {
 	transform: translateY(-1px);
 	box-shadow: var(--shadow-2);
 }
-.card.kpi:active {
-	transform: translateY(0);
-}
-.card.kpi.active {
-	border-color: var(--brand);
-	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+
+/* ikon kanan-atas */
+.kpi-icon {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	width: 34px;
+	height: 34px;
+	border-radius: 10px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px;
+	background: var(--accent-50);
+	color: var(--accent-600);
 }
 
-/* Typography */
+/* teks */
 .kpi-title {
 	font-size: 12px;
 	color: var(--muted);
 	text-transform: uppercase;
 	letter-spacing: 0.02em;
 }
+
 .kpi-value {
-	font-size: clamp(22px, 3vw, 32px);
-	font-weight: 700;
+	font-size: clamp(26px, 3.2vw, 36px);
+	font-weight: 800;
 	line-height: 1.1;
 	margin: 8px 0;
-	font-variant-numeric: tabular-nums; /* angka sejajar */
+	color: var(--accent-600);
+	font-variant-numeric: tabular-nums;
 }
+
 .kpi-sub {
 	font-size: 12px;
 	color: var(--muted-2);
 }
 
-/* Warna angka (reuse yang sudah ada) */
-.text-green {
-	color: var(--ok);
-}
-.text-red {
-	color: var(--bad);
+/* footer pill "Active" */
+.kpi-foot {
+	position: absolute;
+	right: 12px;
+	bottom: 12px;
 }
 
-/* Aksesibilitas: outline saat keyboard focus */
-.card.kpi:focus-visible {
-	outline: none;
-	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.28);
-	border-color: var(--brand);
+.pill {
+	display: inline-flex;
+	align-items: center;
+	padding: 6px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	background: var(--accent-50);
+	color: var(--accent-700);
+	border: 1px solid var(--accent-100);
+}
+
+/* ====== Variasi warna via CSS variables per card ====== */
+.card.kpi.is-green {
+	--accent-50: #ecfdf5;
+	--accent-100: #d1fae5;
+	--accent-600: #16a34a;
+	--accent-700: #15803d;
+	border-color: #bbf7d0;
+	box-shadow: 0 0 0 1px #bbf7d0 inset, var(--shadow-1);
+}
+
+.card.kpi.is-red {
+	--accent-50: #fef2f2;
+	--accent-100: #fee2e2;
+	--accent-600: #dc2626;
+	--accent-700: #b91c1c;
+	border-color: #fecaca;
+	box-shadow: 0 0 0 1px #fecaca inset, var(--shadow-1);
+}
+
+.card.kpi.is-blue {
+	--accent-50: #eff6ff;
+	--accent-100: #dbeafe;
+	--accent-600: #2563eb;
+	--accent-700: #1d4ed8;
+	border-color: #bfdbfe;
+	box-shadow: 0 0 0 1px #bfdbfe inset, var(--shadow-1);
+}
+
+.card.kpi.is-orange {
+	--accent-50: #fff7ed;
+	--accent-100: #ffedd5;
+	--accent-600: #ea580c;
+	--accent-700: #c2410c;
+	border-color: #fed7aa;
+	box-shadow: 0 0 0 1px #fed7aa inset, var(--shadow-1);
+}
+
+.card.kpi.is-purple {
+	--accent-50: #faf5ff;
+	--accent-100: #ede9fe;
+	--accent-600: #7c3aed;
+	--accent-700: #6d28d9;
+	border-color: #ddd6fe;
+	box-shadow: 0 0 0 1px #ddd6fe inset, var(--shadow-1);
+}
+
+/* optional: efek “aktif” saat dipilih */
+.card.kpi.active {
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-600) 18%, transparent);
+	border-color: var(--accent-600);
 }
 
 /* (Opsional) Tweak mobile spacing */

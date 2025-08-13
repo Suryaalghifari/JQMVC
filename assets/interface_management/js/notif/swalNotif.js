@@ -89,6 +89,7 @@
 					Swal.getConfirmButton().textContent =
 						t === "xlsx" ? "Export Excel" : "Export CSV";
 				};
+
 				radios.forEach((r) => r.addEventListener("change", update));
 				update();
 			},
@@ -115,6 +116,19 @@
 			confirmButtonText: "Ya, export sekarang",
 			cancelButtonText: "Batal",
 			allowOutsideClick: false,
+			customClass: { popup: popupClass("xs", "swal-compact") },
+		});
+	};
+	window.confirmLargeImport = function (count, threshold = 5000) {
+		if (count < threshold) return Promise.resolve({ isConfirmed: true });
+		return Swal.fire({
+			icon: "warning",
+			title: "Import besar",
+			html: `Baris yang akan diimpor <b>${count}</b> (≥ ${threshold}).<br>
+           Proses bisa memakan waktu lebih lama. Lanjutkan?`,
+			showCancelButton: true,
+			confirmButtonText: "Lanjut",
+			cancelButtonText: "Batal",
 			customClass: { popup: popupClass("xs", "swal-compact") },
 		});
 	};
@@ -213,6 +227,22 @@
 			customClass: { popup: popupClass(compact ? "sm" : "lg", "swal-import") },
 		});
 	};
+	window.confirmImport = function (count, opts = {}) {
+		const info =
+			opts.warnText ||
+			"Proses ini akan menambah / memperbarui data yang cocok.";
+		return Swal.fire({
+			icon: "question",
+			title: "Konfirmasi Import",
+			html: `Anda akan mengimpor <b>${count}</b> baris.<br>
+           <span style="font-size:12px;opacity:.8">${info}</span>`,
+			showCancelButton: true,
+			confirmButtonText: "Ya, impor sekarang",
+			cancelButtonText: "Batal",
+			allowOutsideClick: false,
+			customClass: { popup: popupClass("xs", "swal-compact") },
+		});
+	};
 
 	window.showImportWorking = function (total) {
 		return Swal.fire({
@@ -248,3 +278,209 @@
 		});
 	};
 })();
+
+window.showEditRowForm = function (row = {}, opts = {}) {
+	const size = opts.size || "sm";
+	const esc = (s) =>
+		String(s ?? "")
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#39;");
+
+	const html = `
+    <style>
+      .fwrap{font-size:13px}
+      .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .fi{display:flex;flex-direction:column;gap:6px;background:#fbfdff;border:1px solid #eef2f7;border-radius:10px;padding:10px}
+      .fi label{font-weight:600;color:#374151}
+      .fi .req::after{content:" *"; color:#ef4444}
+      .fi input,.fi select{
+        border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:14px;outline:none;background:#fff
+      }
+      .fi input:focus,.fi select:focus{border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+      .full{grid-column:1 / -1}
+    </style>
+    <div class="fwrap">
+      <div class="grid2">
+        <div class="fi"><label class="req">Peering</label>
+          <input id="f-peering" placeholder="cth: GOOGLE" value="${esc(
+						row.peering
+					)}">
+        </div>
+        <div class="fi"><label class="req">Location</label>
+          <input id="f-location" placeholder="cth: JAKARTA" value="${esc(
+						row.location
+					)}">
+        </div>
+
+        <div class="fi full"><label class="req">Interface</label>
+          <input id="f-interface" placeholder="Nama interface" value="${esc(
+						row.interface
+					)}">
+        </div>
+
+        <div class="fi"><label class="req">POP</label>
+          <input id="f-pop" placeholder="cth: JKT" value="${esc(row.pop_site)}">
+        </div>
+        <div class="fi"><label>Capacity</label>
+          <input id="f-cap" inputmode="numeric" placeholder="angka, optional" value="${esc(
+						row.Capacity ?? ""
+					)}">
+        </div>
+
+        <div class="fi"><label>Service</label>
+          <input id="f-service" placeholder="service" value="${esc(
+						row.service
+					)}">
+        </div>
+        <div class="fi"><label>RRD Status</label>
+          <select id="f-rrdstatus">
+            <option value=""></option>
+            <option value="avail" ${
+							String(row.rrd_status || "").toLowerCase() === "avail"
+								? "selected"
+								: ""
+						}>Avail</option>
+            <option value="unavail" ${
+							String(row.rrd_status || "").toLowerCase() === "unavail"
+								? "selected"
+								: ""
+						}>Unavail</option>
+          </select>
+        </div>
+
+        <div class="fi full"><label>RRD Path</label>
+          <input id="f-rrdpath" placeholder="/path/..." value="${esc(
+						row.rrd_path
+					)}">
+        </div>
+        <div class="fi full"><label>RRD Alias</label>
+          <input id="f-rrdalias" placeholder="alias" value="${esc(
+						row.rrd_alias
+					)}">
+        </div>
+      </div>
+    </div>
+  `;
+	// === Konfirmasi simpan (tampilkan perubahan) ===
+	window.confirmEdit = function (before = {}, after = {}, size = "xs") {
+		const labels = {
+			peering: "Peering",
+			location: "Location",
+			interface: "Interface",
+			pop_site: "POP",
+			Capacity: "Capacity",
+			service: "Service",
+			rrd_status: "RRD Status",
+			rrd_path: "RRD Path",
+			rrd_alias: "RRD Alias",
+		};
+		const order = Object.keys(labels);
+
+		const changes = order
+			.map((k) => {
+				const b = String(before[k] ?? "");
+				const a = String(after[k] ?? "");
+				return b !== a
+					? { label: labels[k], before: b || "-", after: a || "-" }
+					: null;
+			})
+			.filter(Boolean);
+
+		const html = changes.length
+			? `
+      <div style="max-height:220px;overflow:auto;border:1px solid #e5e7eb;border-radius:10px">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:#f8fafc">
+              <th style="text-align:center;padding:8px;border-bottom:1px solid #e5e7eb">Field</th>
+              <th style="text-align:center;padding:8px;border-bottom:1px solid #e5e7eb">Sebelum</th>
+              <th style="text-align:center;padding:8px;border-bottom:1px solid #e5e7eb">Sesudah</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${changes
+							.map(
+								(c) => `
+              <tr>
+                <td style="padding:8px;border-bottom:1px solid #eef2f7">${c.label}</td>
+                <td style="padding:8px;border-bottom:1px solid #eef2f7;opacity:.8">${c.before}</td>
+                <td style="padding:8px;border-bottom:1px solid #eef2f7"><b>${c.after}</b></td>
+              </tr>`
+							)
+							.join("")}
+          </tbody>
+        </table>
+      </div>`
+			: `<div style="font-size:13px">Tidak ada perubahan pada data.</div>`;
+
+		return Swal.fire({
+			icon: "question",
+			title: "Konfirmasi Simpan",
+			html,
+			showCancelButton: true,
+			confirmButtonText: changes.length
+				? "Ya, simpan perubahan"
+				: "Simpan (tanpa perubahan)",
+			cancelButtonText: "Batal",
+			allowOutsideClick: false,
+			customClass: {
+				popup:
+					typeof popupClass === "function"
+						? popupClass(size, "swal-compact")
+						: "",
+			},
+		});
+	};
+
+	return Swal.fire({
+		title: "Edit Baris",
+		html,
+		focusConfirm: false,
+		showCancelButton: true,
+		confirmButtonText: "Simpan",
+		cancelButtonText: "Batal",
+		customClass: {
+			popup:
+				typeof popupClass === "function"
+					? popupClass(size, "swal-compact")
+					: "",
+		},
+		preConfirm: () => {
+			const get = (sel) =>
+				Swal.getPopup().querySelector(sel)?.value.trim() || "";
+			const data = {
+				peering: get("#f-peering"),
+				location: get("#f-location"),
+				interface: get("#f-interface"),
+				pop_site: get("#f-pop"),
+				rrd_path: get("#f-rrdpath") || null,
+				rrd_alias: get("#f-rrdalias") || null,
+				rrd_status: get("#f-rrdstatus") || null,
+				service: get("#f-service") || null,
+				Capacity: (function (v) {
+					if (v === "") return null;
+					const n = Number(String(v).replace(/[^\d.-]/g, ""));
+					if (isNaN(n)) {
+						Swal.showValidationMessage("Capacity harus angka.");
+						return false;
+					}
+					return n;
+				})(get("#f-cap")),
+			};
+
+			const miss = ["peering", "location", "interface", "pop_site"].filter(
+				(k) => !data[k]
+			);
+			if (miss.length) {
+				Swal.showValidationMessage(
+					"Field wajib: Peering, Location, Interface, POP."
+				);
+				return false;
+			}
+			return data;
+		},
+	});
+};

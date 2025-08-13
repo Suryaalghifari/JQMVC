@@ -4,15 +4,19 @@
 	IM.columns = [
 		{
 			text: "No",
-			width: 50,
+			width: 56,
 			editable: false,
-			align: "center",
-			textalign: "center",
 			filterable: false,
-			cellsrenderer: function (row) {
-				return `<div style="text-align:center; width:100%;">${row + 1}</div>`;
+			align: "center",
+			cellsalign: "center",
+			datafield: "_row",
+			cellsrenderer: function (row, column, value, defaultHtml) {
+				const $el = $(defaultHtml);
+				$el.css({ textAlign: "center", padding: 0 }).text(row + 1);
+				return $el[0].outerHTML;
 			},
 		},
+
 		{
 			text: "Peering",
 			datafield: "peering",
