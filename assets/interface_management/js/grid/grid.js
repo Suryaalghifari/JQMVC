@@ -20,6 +20,7 @@
 				sortable: true,
 				filterable: true,
 				columnsmenu: true,
+				editmode: "dblclick",
 				showfiltermenuitems: true,
 				filtermode: "default",
 				editable: true,
@@ -30,12 +31,10 @@
 				columnmenuopening: IM.ColMenu.opening,
 			});
 
-			// menu kolom & guards (sekali aja)
 			if (IM.ColMenu && IM.ColMenu.bindGridMenuHandlers) {
 				IM.ColMenu.bindGridMenuHandlers();
 			}
 
-			// KPI hooks (sekali aja, gabungkan event2 yg sama)
 			if (IM.KPI && IM.KPI.update) {
 				$g.on(
 					"bindingcomplete filter sort pagechanged pagesizechanged",
@@ -43,7 +42,6 @@
 				);
 			}
 
-			// pagesize 'All'
 			$g.on("pagesizechanged", function (event) {
 				const newPageSize = event.args.pagesize;
 				const totalRows = $g.jqxGrid("getdatainformation").rowscount;
@@ -52,9 +50,11 @@
 				}
 			});
 
-			// cell edit CRUD (sekali aja)
 			if (IM.Actions && IM.Actions.wireCellEdit) {
 				IM.Actions.wireCellEdit();
+			}
+			if (IM.Edit && IM.Edit.initBulk) {
+				IM.Edit.initBulk();
 			}
 		},
 	};
