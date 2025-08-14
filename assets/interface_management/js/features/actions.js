@@ -17,6 +17,20 @@
 	IM.Actions = {
 		addRow() {
 			const G = IM.cfg.GRID;
+
+			if (IM.Edit && IM.Edit.isBulkEditing && IM.Edit.isBulkEditing()) {
+				showNotif({
+					icon: "warning",
+					title: "Sedang mode edit banyak baris",
+					text: "Selesaikan Simpan/Batal terlebih dahulu sebelum menambah data baru.",
+					position: "center",
+					showConfirmButton: true,
+					confirmButtonText: "OK",
+					timer: null,
+				});
+				return;
+			}
+
 			const rows = $(G).jqxGrid("getrows");
 			const hasEmpty = rows.some(
 				(r) => !r.peering && !r.location && !r.interface && !r.pop_site
@@ -25,6 +39,7 @@
 
 			const newrow = {
 				id: "",
+				_isNew: true,
 				peering: "",
 				location: "",
 				interface: "",
@@ -35,6 +50,7 @@
 				Capacity: "",
 				service: "",
 			};
+
 			$(G).jqxGrid("addrow", null, newrow, "first");
 			$(G).jqxGrid("begincelledit", 0, "peering");
 		},
@@ -231,7 +247,6 @@
 			IM.Actions.refresh(false);
 		},
 
-		// export file
 		openExportDialog() {
 			const G = IM.cfg.GRID;
 			const rowsDisplay = $(G).jqxGrid("getdisplayrows") || [];
@@ -394,98 +409,204 @@
 
 		wireCellEdit() {
 			const G = IM.cfg.GRID;
-			$(G).on("cellendedit", function (event) {
+
+			$(G).off("cellendedit.im-actions");
+
+			function validateCell(field, value) {
+				const required = ["peering", "location", "interface", "pop_site"];
+				if (required.includes(field)) {
+					if (!String(value ?? "").trim()) return `${field} wajib diisi`;
+				}
+				if (field === "Capacity") {
+					if (value !== "" && value !== null && value !== undefined) {
+						const num = Number(String(value).replace(/[^\d.-]/g, ""));
+						if (Number.isNaN(num)) return "Capacity harus angka";
+					}
+				}
+				return null;
+			}
+
+			$(G).on("cellendedit.im-actions", function (event) {
 				const { datafield, rowindex, value, oldvalue } = event.args;
 				const rowdata = $(G).jqxGrid("getrowdata", rowindex);
-				rowdata[datafield] = value;
+
+				if (IM.Edit && IM.Edit.isBulkEditing && IM.Edit.isBulkEditing()) return;
+
 				if (value === oldvalue) return;
 
-				if (!rowdata.id || rowdata.id === "") {
+				const isNumericId =
+					rowdata.id != null && /^\d+$/.test(String(rowdata.id));
+				const isNew = rowdata._isNew === true || !isNumericId;
+
+				const nextData = { ...rowdata, [datafield]: value };
+
+				if (isNew) {
 					const req = [
 						{ key: "peering", label: "Peering" },
 						{ key: "location", label: "Location" },
 						{ key: "interface", label: "Interface" },
 						{ key: "pop_site", label: "POP" },
 					];
-					const empty = req.filter((f) => !rowdata[f.key]);
-					if (empty.length) {
+					const miss = req.filter((f) => !String(nextData[f.key] ?? "").trim());
+					if (miss.length) {
 						setTimeout(
-							() => $(G).jqxGrid("begincelledit", rowindex, empty[0].key),
+							() => $(G).jqxGrid("begincelledit", rowindex, miss[0].key),
 							10
 						);
-						const fieldsText = empty.map((f) => f.label).join(", ");
 						showNotif({
 							icon: "error",
 							title: "Gagal tambah data",
-							text: "Field berikut wajib diisi: " + fieldsText,
+							text: "Field wajib: Peering, Location, Interface, POP.",
 							position: "center",
 							showConfirmButton: true,
 							confirmButtonText: "Tutup",
 							timer: null,
 						});
+
+						$(G).jqxGrid("setcellvalue", rowindex, datafield, oldvalue);
 						return;
 					}
+
+					const vErr = validateCell(datafield, value);
+					if (vErr) {
+						showNotif({ icon: "error", title: "Validasi gagal", text: vErr });
+						$(G).jqxGrid("setcellvalue", rowindex, datafield, oldvalue);
+						return;
+					}
+
+					const fieldLabelMap = {
+						peering: "Peering",
+						location: "Location",
+						interface: "Interface",
+						pop_site: "POP",
+						rrd_path: "RRD Path",
+						rrd_alias: "RRD Alias",
+						rrd_status: "RRD Status",
+						Capacity: "Capacity",
+						service: "Service",
+					};
+					setTimeout(async () => {
+						const ask = await window.confirmSingleEdit?.({
+							field: fieldLabelMap[datafield] || datafield,
+							oldValue: oldvalue,
+							newValue: value,
+							row: rowdata,
+						});
+						if (!ask || !ask.isConfirmed) {
+							$(G).jqxGrid("setcellvalue", rowindex, datafield, oldvalue);
+							return;
+						}
+
+						IM.api
+							.add({
+								peering: nextData.peering,
+								location: nextData.location,
+								interface: nextData.interface,
+								pop_site: nextData.pop_site,
+								rrd_path: nextData.rrd_path || null,
+								rrd_alias: nextData.rrd_alias || null,
+								rrd_status: nextData.rrd_status || null,
+								Capacity: nextData.Capacity ?? null,
+								service: nextData.service || null,
+							})
+							.done((r) => {
+								if (r && r.success) {
+									showNotif({
+										icon: "success",
+										title: "Data berhasil ditambah!",
+										toast: true,
+										timer: 1800,
+										position: "center",
+									});
+									$(G).jqxGrid("updatebounddata");
+								} else {
+									showNotif({
+										icon: "error",
+										title: "Gagal tambah data",
+										text: (r && r.message) || "Unknown error",
+									});
+									$(G).jqxGrid("setcellvalue", rowindex, datafield, oldvalue);
+								}
+							})
+							.fail((xhr, _s, err) => {
+								showNotif({
+									icon: "error",
+									title: "Terjadi error!",
+									html: `<pre>${xhr.responseText || err}</pre>`,
+								});
+								$(G).jqxGrid("setcellvalue", rowindex, datafield, oldvalue);
+							});
+					}, 0);
+
+					return;
+				}
+
+				const vErr = validateCell(datafield, value);
+				if (vErr) {
+					showNotif({ icon: "error", title: "Validasi gagal", text: vErr });
+					$(G).jqxGrid("setcellvalue", rowindex, datafield, oldvalue);
+					return;
+				}
+
+				const labelMap = {
+					peering: "Peering",
+					location: "Location",
+					interface: "Interface",
+					pop_site: "POP",
+					rrd_path: "RRD Path",
+					rrd_alias: "RRD Alias",
+					rrd_status: "RRD Status",
+					Capacity: "Capacity",
+					service: "Service",
+				};
+
+				setTimeout(async () => {
+					const ask = await window.confirmSingleEdit?.({
+						field: labelMap[datafield] || datafield,
+						oldValue: oldvalue,
+						newValue: value,
+						row: rowdata,
+					});
+					if (!ask || !ask.isConfirmed) {
+						$(G).jqxGrid("setcellvalue", rowindex, datafield, oldvalue);
+						return;
+					}
+
+					const payload = { ...rowdata, [datafield]: value };
+					if ("pop_site" in payload) {
+						payload.pop = payload.pop_site;
+						delete payload.pop_site;
+					}
+
 					IM.api
-						.add(rowdata)
+						.update(rowdata.id, payload)
 						.done((r) => {
-							if (r.success) {
+							if (r && r.success) {
 								showNotif({
 									icon: "success",
-									title: "Data berhasil ditambah!",
+									title: "Perubahan disimpan",
 									toast: true,
-									timer: 2000,
+									timer: 1600,
 									position: "center",
 								});
-								$(G).jqxGrid("updatebounddata");
 							} else {
 								showNotif({
 									icon: "error",
-									title: "Gagal tambah data",
-									text: r.message || "Unknown error",
+									title: "Gagal update data!",
+									text: (r && r.message) || "Unknown error",
 								});
+								$(G).jqxGrid("setcellvalue", rowindex, datafield, oldvalue);
 							}
 						})
 						.fail((xhr, _s, err) => {
 							showNotif({
 								icon: "error",
-								title: "Terjadi error!",
-								html: `<div style="text-align:left"><b>${err}</b><hr><pre style="max-width:300px;white-space:pre-wrap;">${xhr.responseText}</pre></div>`,
-								position: "center",
-								showConfirmButton: true,
-								confirmButtonText: "Tutup",
-								timer: null,
+								title: "Terjadi error update!",
+								html: `<pre>${xhr.responseText || err}</pre>`,
 							});
+							$(G).jqxGrid("setcellvalue", rowindex, datafield, oldvalue);
 						});
-					return;
-				}
-
-				IM.api
-					.update(rowdata.id, rowdata)
-					.done((r) => {
-						if (r.success) {
-							showNotif({
-								icon: "success",
-								title: "Berhasil!",
-								text: "Data berhasil diupdate!",
-								toast: true,
-								timer: 3000,
-								position: "center",
-							});
-						} else {
-							showNotif({
-								icon: "error",
-								title: "Gagal update data!",
-								text: r.message || "Unknown error",
-							});
-						}
-					})
-					.fail((xhr, _s, err) => {
-						showNotif({
-							icon: "error",
-							title: "Terjadi error update!",
-							html: `<div style="text-align:left"><b>${err}</b><hr><pre style="max-width:300px;white-space:pre-wrap;">${xhr.responseText}</pre></div>`,
-						});
-					});
+				}, 0);
 			});
 		},
 	};
