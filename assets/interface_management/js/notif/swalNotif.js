@@ -364,7 +364,7 @@ window.showEditRowForm = function (row = {}, opts = {}) {
       </div>
     </div>
   `;
-	// === Konfirmasi simpan (tampilkan perubahan) ===
+
 	window.confirmEdit = function (before = {}, after = {}, size = "xs") {
 		const labels = {
 			peering: "Peering",
@@ -482,5 +482,133 @@ window.showEditRowForm = function (row = {}, opts = {}) {
 			}
 			return data;
 		},
+	});
+};
+
+window.confirmSingleEdit = function ({
+	field = "",
+	oldValue = "",
+	newValue = "",
+	row = {},
+} = {}) {
+	const esc = (s) =>
+		String(s ?? "")
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#39;");
+
+	const html = `
+    <div style="text-align:left;font-size:13px">
+      <div style="margin:0 0 8px">Anda akan mengubah kolom <b>${esc(
+				field
+			)}</b>.</div>
+      <table style="width:100%;border-collapse:collapse">
+        <tr>
+          <td style="padding:8px;border:1px solid #e5e7eb;background:#fafafa;width:120px">Sebelum</td>
+          <td style="padding:8px;border:1px solid #e5e7eb;opacity:.85">${
+						esc(oldValue) || "-"
+					}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #e5e7eb;background:#fafafa">Sesudah</td>
+          <td style="padding:8px;border:1px solid #e5e7eb"><b>${
+						esc(newValue) || "-"
+					}</b></td>
+        </tr>
+      </table>
+      <label class="ack" style="display:flex;gap:8px;align-items:flex-start;margin-top:10px">
+        <input type="checkbox" id="ack-cell">
+        <span>Saya paham perubahan ini akan <b>menimpa</b> nilai lama.</span>
+      </label>
+    </div>
+  `;
+
+	return Swal.fire({
+		icon: "question",
+		title: "Simpan perubahan kolom?",
+		html,
+		showCancelButton: true,
+		confirmButtonText: "Ya, simpan",
+		cancelButtonText: "Batal",
+		reverseButtons: true,
+		focusCancel: true,
+		customClass: {
+			popup:
+				typeof popupClass === "function"
+					? popupClass("xs", "swal-compact")
+					: "",
+		},
+		preConfirm: () => {
+			if (!document.getElementById("ack-cell")?.checked) {
+				Swal.showValidationMessage("Centang konfirmasi terlebih dulu.");
+				return false;
+			}
+		},
+	});
+};
+
+window.confirmBulkEdit = function ({
+	selectedCount = 0,
+	changedRows = 0,
+	totalChanges = 0,
+} = {}) {
+	const html = `
+    <div class="swl-text" style="text-align:left">
+      <p style="margin:0 0 8px">
+        Anda akan menyimpan perubahan pada <b>${changedRows}</b> baris (dipilih: <b>${selectedCount}</b>).
+      </p>
+      <div class="swl-sub" style="font-size:12px;color:#6b7280">
+        Total kolom yang berubah: <b>${totalChanges}</b>.<br>
+        Tindakan ini akan <b>menggantikan nilai lama</b>.
+      </div>
+      <label class="ack" style="display:flex;gap:8px;align-items:flex-start;margin-top:10px">
+        <input type="checkbox" id="ack-bulk">
+        <span>Saya paham perubahan <b>akan menimpa</b> data lama.</span>
+      </label>
+    </div>`;
+	return Swal.fire({
+		icon: "question",
+		title: "Simpan perubahan?",
+		html,
+		showCancelButton: true,
+		confirmButtonText: "Ya, simpan",
+		cancelButtonText: "Batal",
+		reverseButtons: true,
+		focusCancel: true,
+		customClass: {
+			popup:
+				typeof popupClass === "function"
+					? popupClass("xs", "swal-compact")
+					: "",
+		},
+		preConfirm: () => {
+			if (!document.getElementById("ack-bulk")?.checked) {
+				Swal.showValidationMessage("Centang konfirmasi terlebih dulu.");
+				return false;
+			}
+		},
+	});
+};
+
+window.showBulkEditResult = function ({ ok = 0, fail = 0 } = {}) {
+	const icon = fail === 0 ? "success" : ok > 0 ? "warning" : "error";
+	const title =
+		fail === 0
+			? "Perubahan tersimpan"
+			: ok > 0
+			? "Sebagian tersimpan"
+			: "Gagal menyimpan";
+	const html = `Berhasil: <b>${ok}</b> • Gagal: <b>${fail}</b>`;
+	return window.showNotif({
+		icon,
+		title,
+		html,
+		toast: true,
+		position: "center",
+		timer: 2600,
+		showConfirmButton: false,
+		size: "xs",
 	});
 };
