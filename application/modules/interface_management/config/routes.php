@@ -10,3 +10,4 @@ $route['api/services_directory/(:num)'] = 'interface_management/interface_manage
 
 $route['api/services_import_bulk'] = 'interface_management/interface_management_api/services_import_bulk';
 
+$route['api/services_update_bulk'] = 'interface_management/interface_management_api/services_update_bulk';
