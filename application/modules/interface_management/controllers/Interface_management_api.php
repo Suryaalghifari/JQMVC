@@ -110,7 +110,7 @@ class Interface_management_api extends MX_Controller
         }
     }
 
-    // GET by ID: Untuk directory
+    
     public function services_directory($id = null)
     {
         if (!$id) {
@@ -154,14 +154,13 @@ class Interface_management_api extends MX_Controller
                 'interface'  => $interface,
                 'pop'        => $pop,
 
-                // kolom lain
                 'rrd_path'   => $r['rrd_path']   ?? null,
                 'rrd_alias'  => $r['rrd_alias']  ?? null,
                 'rrd_status' => $r['rrd_status'] ?? null,
                 'service'    => $r['service']    ?? null,
             ];
 
-            // Capacity -> float
+            
             if (isset($r['Capacity']) && $r['Capacity'] !== '') {
                 $raw = preg_replace('/[^\d\.\-]/', '', (string)$r['Capacity']);
                 $data['Capacity'] = $raw === '' ? null : (float)$raw;
@@ -171,7 +170,7 @@ class Interface_management_api extends MX_Controller
 
             $data['_valid'] = true;
             if ($id !== '' && ctype_digit($id)) {
-                $data['_id'] = (int)$id; // prefer update by ID jika ada
+                $data['_id'] = (int)$id; 
             }
             $clean[] = $data;
         }
@@ -181,4 +180,56 @@ class Interface_management_api extends MX_Controller
         return $this->output->set_content_type('application/json')
             ->set_output(json_encode($result));
     }
+    public function services_update_bulk()
+    {
+        
+        $payload = json_decode($this->input->raw_input_stream, true);
+        $ids     = isset($payload['ids']) && is_array($payload['ids']) ? $payload['ids'] : [];
+        $changes = isset($payload['changes']) && is_array($payload['changes']) ? $payload['changes'] : [];
+
+        if (empty($ids)) {
+            return $this->output->set_content_type('application/json')
+                ->set_output(json_encode(['success' => false, 'message' => 'ids kosong']));
+        }
+        if (empty($changes)) {
+            return $this->output->set_content_type('application/json')
+                ->set_output(json_encode(['success' => false, 'message' => 'changes kosong']));
+        }
+
+        
+        if (isset($changes['pop_site'])) {
+            $changes['pop'] = $changes['pop_site'];
+            unset($changes['pop_site']);
+        }
+
+        
+        $allowed = [
+            'peering',
+            'location',
+            'interface',
+            'pop',
+            'rrd_path',
+            'rrd_alias',
+            'rrd_status',
+            'Capacity',
+            'service'
+        ];
+        $changes = array_intersect_key($changes, array_flip($allowed));
+        if (empty($changes)) {
+            return $this->output->set_content_type('application/json')
+                ->set_output(json_encode(['success' => false, 'message' => 'Tidak ada kolom valid untuk diubah']));
+        }
+
+        
+        if (array_key_exists('Capacity', $changes)) {
+            $raw = $changes['Capacity'];
+            $changes['Capacity'] = ($raw === '' || $raw === null) ? null : (float)$raw;
+        }
+
+        $result = $this->Interface_management_model->update_bulk_by_ids($ids, $changes);
+
+        return $this->output->set_content_type('application/json')
+            ->set_output(json_encode($result));
+    }
+
 }
