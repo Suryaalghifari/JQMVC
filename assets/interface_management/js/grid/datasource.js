@@ -1,6 +1,7 @@
 (function (IM, $) {
 	const source = {
 		datatype: "json",
+		id: "id",
 		datafields: [
 			{ name: "id", type: "string" },
 			{ name: "peering", type: "string" },
