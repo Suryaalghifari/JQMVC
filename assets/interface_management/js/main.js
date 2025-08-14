@@ -1,6 +1,5 @@
 (function (IM, $) {
 	$(function () {
-		// JANGAN timpa IM.cfg.baseUrl lagi di sini
 		IM.Grid.init();
 		IM.Edit && IM.Edit.bindRowDblClick && IM.Edit.bindRowDblClick();
 		IM.KPI && IM.KPI.wireCards && IM.KPI.wireCards();
