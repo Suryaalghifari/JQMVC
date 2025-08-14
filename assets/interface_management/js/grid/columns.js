@@ -23,6 +23,10 @@
 			width: 200,
 			align: "center",
 			cellsalign: "center",
+			filtertype: "custom",
+			createfilterpanel: function (datafield, panel) {
+				IM.Filters.attach("string", datafield, panel, { listHeight: 200 });
+			},
 		},
 
 		{
@@ -33,7 +37,7 @@
 			cellsalign: "center",
 			filtertype: "custom",
 			createfilterpanel: function (datafield, panel) {
-				IM.LocationFilter.create(datafield, panel);
+				IM.Filters.attach("string", datafield, panel, { listHeight: 200 });
 			},
 		},
 
@@ -43,7 +47,10 @@
 			width: 800,
 			align: "center",
 			cellsalign: "center",
-			filtertype: "checkedlist",
+			filtertype: "custom",
+			createfilterpanel: function (datafield, panel) {
+				IM.Filters.attach("string", datafield, panel, { listHeight: 200 });
+			},
 		},
 		{
 			text: "POP",
@@ -51,6 +58,10 @@
 			width: 150,
 			align: "center",
 			cellsalign: "center",
+			filtertype: "custom",
+			createfilterpanel: function (datafield, panel) {
+				IM.Filters.attach("string", datafield, panel, { listHeight: 200 });
+			},
 		},
 		{
 			text: "RRD Path",
@@ -58,6 +69,10 @@
 			width: 400,
 			align: "center",
 			cellsalign: "center",
+			filtertype: "custom",
+			createfilterpanel: function (datafield, panel) {
+				IM.Filters.attach("string", datafield, panel, { listHeight: 200 });
+			},
 		},
 		{
 			text: "RRD Alias",
@@ -65,6 +80,10 @@
 			width: 350,
 			align: "center",
 			cellsalign: "center",
+			filtertype: "custom",
+			createfilterpanel: function (datafield, panel) {
+				IM.Filters.attach("string", datafield, panel, { listHeight: 200 });
+			},
 		},
 
 		{
@@ -81,7 +100,10 @@
 			width: 150,
 			align: "center",
 			cellsalign: "center",
-			filtertype: "number",
+			filtertype: "custom",
+			createfilterpanel: function (datafield, panel) {
+				IM.Filters.attach("string", datafield, panel, { listHeight: 200 });
+			},
 		},
 		{
 			text: "Service",
@@ -89,7 +111,10 @@
 			width: 80,
 			align: "center",
 			cellsalign: "center",
-			filtertype: "checkedlist",
+			filtertype: "custom",
+			createfilterpanel: function (datafield, panel) {
+				IM.Filters.attach("string", datafield, panel, { listHeight: 200 });
+			},
 		},
 
 		{
