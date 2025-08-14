@@ -48,7 +48,7 @@
 				e.stopPropagation();
 				IM.Directory.show($(this).data("id"));
 			});
-			// kompatibilitas: fungsi global lama
+
 			window.showDirectoryPopup = IM.Directory.show;
 		},
 	};
